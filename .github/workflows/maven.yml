@@ -28,8 +28,33 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: |
+        mvn -B clean verify sonar:sonar \
+          -Dsonar.projectKey=trillion-book \
+          -Dsonar.projectName='trillion-book' \
+          -Dsonar.host.url=${{ secrets.SONAR_HOST }} \
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }} 
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
-    - name: Update dependency graph
-      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
+#    - name: Update dependency graph
+#      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
+    - name : upload file
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SSH_IP }}
+        username: ${{ secrets.SSH_ID }}
+        password: ${{ secrets.SSH_PASSWORD }} # 'key:' 대신 'password:' (올바른 수정)
+        port: ${{ secrets.SSH_PORT }}
+        # *.jar 대신 정확한 파일명을 지정하는 것이 안전합니다. (pom.xml 확인 필요)
+        source: "target/book-0.0.1-SNAPSHOT.jar"
+        target: "~/"
+        rm: false
+
+    - name: execute shell script
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_IP }}
+        username: ${{ secrets.SSH_ID }}
+        password: ${{ secrets.SSH_PASSWORD }} # 'PASSWORD'가 아니라 'SSH_PASSWORD'
+        port: ${{ secrets.SSH_PORT }}
+        script: "./startup.sh"
