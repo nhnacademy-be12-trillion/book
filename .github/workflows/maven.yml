@@ -43,9 +43,8 @@ jobs:
       with:
         host: ${{ secrets.SSH_IP }}
         username: ${{ secrets.SSH_ID }}
-        password: ${{ secrets.SSH_PASSWORD }} # 'key:' 대신 'password:' (올바른 수정)
+        password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
-        # *.jar 대신 정확한 파일명을 지정하는 것이 안전합니다. (pom.xml 확인 필요)
         source: "target/book-0.0.1-SNAPSHOT.jar"
         target: "~/"
         rm: false
@@ -55,6 +54,6 @@ jobs:
       with:
         host: ${{ secrets.SSH_IP }}
         username: ${{ secrets.SSH_ID }}
-        password: ${{ secrets.SSH_PASSWORD }} # 'PASSWORD'가 아니라 'SSH_PASSWORD'
+        password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
         script: "./startup.sh"
