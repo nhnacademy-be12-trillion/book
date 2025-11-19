@@ -23,7 +23,7 @@ public class Book {
     // 도서 ID
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long bookId;
 
     // ISBN 번호
     @CsvBindByName(column = "ISBN_THIRTEEN_NO")
@@ -51,7 +51,7 @@ public class Book {
     private LocalDate bookPublicationDate;
 
     // 목차
-    private String bookContents;
+    private String bookIndex;
 
     // 포장 여부
     private boolean bookPackaging;
@@ -66,7 +66,7 @@ public class Book {
     // 정가
     @CsvCustomBindByName(
             column = "PRC_VALUE",
-            converter = CustomPriceConverter.class // ⬅️ [핵심] 가격 컨버터 지정
+            converter = CustomPriceConverter.class // 가격 컨버터 지정
     )
     private int bookRegularPrice;
 

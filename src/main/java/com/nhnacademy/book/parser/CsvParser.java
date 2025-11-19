@@ -57,7 +57,7 @@ public class CsvParser implements CommandLineRunner {
             for (Book book : parsedBooks) {
 
                 // -- CSV 파일에 없는 값 --
-                book.setBookContents("");
+                book.setBookIndex("");
                 book.setBookPackaging(false);
                 book.setBookState(BookState.ON_SALE);
                 book.setBookStock(100);
