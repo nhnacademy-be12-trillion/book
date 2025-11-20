@@ -40,7 +40,7 @@ public class Book {
     @CsvBindByName(column = "BOOK_INTRCN_CN")
     private String bookDescription;
 
-    // 출판사
+    // 출판사 -> 테이블 분리
     @CsvBindByName(column = "PUBLISHER_NM")
     private String bookPublisher;
 
@@ -74,9 +74,9 @@ public class Book {
     private int bookSalePrice;
 
     // 리뷰 점수
-    private String bookReviewRate;
+    private double bookReviewRate;
 
-    // 책 이미지
+    // 책 이미지 -> 파일 테이블에 따로 빼기?
     @CsvBindByName(column = "IMAGE_URL")
     private String bookImage;
 

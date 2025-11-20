@@ -89,7 +89,7 @@ public class CsvParser implements CommandLineRunner {
                 book.setBookPackaging(false);
                 book.setBookState(BookState.ON_SALE);
                 book.setBookStock(100);
-                book.setBookReviewRate("0.0");
+                book.setBookReviewRate(0.0);
 
                 // -- CSV 파일에 있지만 비어있을 수도 있는 필드 --
 
