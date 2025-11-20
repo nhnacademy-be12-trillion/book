@@ -79,5 +79,4 @@ public class Book {
     // 책 이미지 -> 파일 테이블에 따로 빼기?
     @CsvBindByName(column = "IMAGE_URL")
     private String bookImage;
-
 }
