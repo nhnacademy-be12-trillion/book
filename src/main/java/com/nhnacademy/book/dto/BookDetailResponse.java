@@ -31,7 +31,7 @@ public class BookDetailResponse {
                 .isbn(book.getIsbn())
                 .bookName(book.getBookName())
                 .bookDescription(book.getBookDescription())
-                .bookPublisher(book.getBookPublisher())
+//                .bookPublisher(book.getBookPublisher())
                 .bookPublicationDate(book.getBookPublicationDate())
                 .bookIndex(book.getBookIndex())
                 .bookPackaging(book.isBookPackaging())
