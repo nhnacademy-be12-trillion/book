@@ -17,7 +17,7 @@ import java.util.Map;
 public class CategoryParser {
 
     public List<Category> parse(Reader reader) throws IOException, CsvException {
-        Map<Long ,Category> categoryMapByCode = new HashMap<>();
+        Map<Long, Category> categoryMapByCode = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
             List<String[]> allLines = csvReader.readAll();

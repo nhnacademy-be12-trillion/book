@@ -4,12 +4,14 @@ import com.nhnacademy.book.entity.Book;
 import com.opencsv.bean.AbstractBeanField;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 @Slf4j
+@Component
 public class CustomDateConverter extends AbstractBeanField<Book, LocalDate> {
 
     // 2가지 형식의 포맷터를 미리 정의
