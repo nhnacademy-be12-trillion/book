@@ -21,7 +21,7 @@ public class BookListResponse {
     public static BookListResponse from(Book book) {
         return BookListResponse.builder()
                 .bookName(book.getBookName())
-                .bookPublisher(book.getBookPublisher())
+//                .bookPublisher(book.getBookPublisher())
                 .bookPackaging(book.isBookPackaging())
                 .bookState(book.getBookState())
                 .bookStock(book.getBookStock())

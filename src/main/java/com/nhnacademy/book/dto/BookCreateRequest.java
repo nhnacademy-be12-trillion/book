@@ -24,5 +24,4 @@ public class BookCreateRequest {
     private int bookRegularPrice;
     private int bookSalePrice;
     private String bookImage;
-
 }

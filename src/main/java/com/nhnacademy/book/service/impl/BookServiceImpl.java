@@ -50,7 +50,7 @@ public class BookServiceImpl implements BookService {
         book.setIsbn(request.getIsbn());
         book.setBookName(request.getBookName());
         book.setBookDescription(request.getBookDescription());
-        book.setBookPublisher(request.getBookPublisher());
+//        book.setBookPublisher(request.getBookPublisher());
         book.setBookPublicationDate(request.getBookPublicationDate());
         book.setBookIndex(request.getBookIndex());
         book.setBookPackaging(request.isBookPackaging());

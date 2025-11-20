@@ -1,9 +1,11 @@
 package com.nhnacademy.book.parser;
 
 import com.nhnacademy.book.entity.Category;
+import com.nhnacademy.book.repository.CategoryRepository;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -13,11 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @Component
 public class CategoryParser {
+    private final CategoryRepository categoryRepository;
 
-    public List<Category> parse(Reader reader) throws IOException, CsvException {
-        Map<Long ,Category> categoryMapByCode = new HashMap<>();
+    public void parse(Reader reader) throws IOException, CsvException {
+        Map<Long, Category> categoryMapByCode = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
             List<String[]> allLines = csvReader.readAll();
@@ -45,7 +49,7 @@ public class CategoryParser {
                     });
         }
 
-        return new ArrayList<>(categoryMapByCode.values());
+        categoryRepository.saveAll(categoryMapByCode.values());
     }
 
     private Long getParentCode(Long code) {
