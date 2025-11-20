@@ -1,8 +1,10 @@
 package com.nhnacademy.book.parser;
 
+import com.nhnacademy.book.entity.Author;
 import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.BookState;
 import com.nhnacademy.book.entity.Publisher;
+import com.nhnacademy.book.repository.AuthorRepository;
 import com.nhnacademy.book.repository.BookRepository;
 import com.nhnacademy.book.repository.PublisherRepository;
 import com.opencsv.CSVReader;
@@ -26,13 +28,16 @@ import java.util.Set;
 @Component
 public class BookParser {
     private final CustomDateConverter customDateConverter;
+
     private final BookRepository bookRepository;
     private final PublisherRepository publisherRepository;
+    private final AuthorRepository authorRepository;
 
     public void parse(Reader reader) throws IOException, CsvException {
         List<String[]> allLines;
         List<Book> books = new ArrayList<>();
         Set<Publisher> publishers = new HashSet<>();
+        Set<Author> authors = new HashSet<>();
 
         try (CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
             allLines = csvReader.readAll();
@@ -61,9 +66,14 @@ public class BookParser {
                         String isbnNo = line[17].trim();
 
                         Publisher publisher = new Publisher(publisherNm);
+                        Author author = new Author(authrNm);
 
                         if (!publisher.getPublisherName().isBlank()) {
                             publishers.add(publisher);
+                        }
+
+                        if (!author.getAuthorName().isBlank()) {
+                            authors.add(author);
                         }
 
                         try {
@@ -91,6 +101,7 @@ public class BookParser {
         }
 
         publisherRepository.saveAll(publishers);
+        authorRepository.saveAll(authors);
 
         log.info("[CSV] 모든 데이터 읽기 완료: {} 건", allLines.size());
 
