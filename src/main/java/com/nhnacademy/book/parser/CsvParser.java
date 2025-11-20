@@ -41,9 +41,8 @@ public class CsvParser implements CommandLineRunner {
 
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
 
-                List<Category> categories = categoryParser.parse(reader);
+                categoryParser.parse(reader);
 
-                categoryRepository.saveAll(categories);
             } catch (Exception e) {
                 log.info("[CSV] 카테고리 데이터 파싱 실패: {}", e.getMessage(), e);
             }
@@ -63,11 +62,8 @@ public class CsvParser implements CommandLineRunner {
 
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
 
-                List<Book> books = bookParser.parse(reader);
+                bookParser.parse(reader);
 
-                log.info("[CSV] DB에 Batch Insert 시작... ({}개 씩)", 1000);
-                bookRepository.saveAll(books);
-                log.info("[CSV] 총 {} 건의 도서 데이터 저장 완료.", books.size());
             } catch (Exception e) {
                 log.info("[CSV] 도서 데이터 파싱 실패: {}", e.getMessage(), e);
             }
