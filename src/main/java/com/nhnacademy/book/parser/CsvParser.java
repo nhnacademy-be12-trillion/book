@@ -2,7 +2,9 @@ package com.nhnacademy.book.parser;
 
 import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.BookState;
+import com.nhnacademy.book.entity.Category;
 import com.nhnacademy.book.repository.BookRepository;
+import com.nhnacademy.book.repository.CategoryRepository;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +24,36 @@ import java.util.List;
 public class CsvParser implements CommandLineRunner {
 
     private final BookRepository bookRepository;
+    private final CategoryRepository categoryRepository;
+    private final CategoryParser categoryParser;
 
     @Override
     public void run(String... args) throws Exception {
+
+        // 카테고리 파싱 시작
+        if (categoryRepository.count() > 0) {
+            log.info("[CSV] 카테고리 데이터가 이미 존재합니다. ({} 건). 파싱을 건너뜁니다,", categoryRepository.count());
+        }
+
+        log.info("[CSV] 카테고리 데이터베이스가 비어있습니다. CSV 파싱을 시작합니다...");
+
+        try {
+            String categoryFilePath = "category.csv";
+
+            ClassPathResource resource = new ClassPathResource(categoryFilePath);
+
+            Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
+
+            List<Category> categories = categoryParser.parse(reader);
+
+            categoryRepository.saveAll(categories);
+        } catch (Exception e) {
+            log.info("[CSV] 카테고리 데이터 파싱 실패: {}", e.getMessage(), e);
+        }
+        // 카테고리 파싱 끝
+
         // 데이터 중복 체크
+
         if(bookRepository.count() > 0) {
             log.info("[CSV] 도서 데이터가 이미 존재합니다. ({} 건). 파싱을 건너뜁니다,", bookRepository.count());
             return;
