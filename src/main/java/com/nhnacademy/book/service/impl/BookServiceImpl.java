@@ -6,7 +6,9 @@ import com.nhnacademy.book.dto.BookListResponse;
 import com.nhnacademy.book.dto.BookUpdateRequest;
 import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.BookState;
+import com.nhnacademy.book.entity.Publisher;
 import com.nhnacademy.book.repository.BookRepository;
+import com.nhnacademy.book.repository.PublisherRepository;
 import com.nhnacademy.book.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
+    private final PublisherRepository publisherRepository;
 
     // 1. 도서 목록 조회 구현 (BookListResponse 사용)
     @Override
@@ -45,20 +48,24 @@ public class BookServiceImpl implements BookService {
     public Long createBook(BookCreateRequest request) {
         // 1. DTO -> Entity 변환
         Book book = new Book();
+        Publisher publisher = publisherRepository.findByPublisherName(request.bookPublisher());
 
+        if (publisher == null) {
+            publisher = new Publisher(request.bookPublisher());
+        }
         // request 필드 매핑
-        book.setIsbn(request.getIsbn());
-        book.setBookName(request.getBookName());
-        book.setBookDescription(request.getBookDescription());
-//        book.setBookPublisher(request.getBookPublisher());
-        book.setBookPublicationDate(request.getBookPublicationDate());
-        book.setBookIndex(request.getBookIndex());
-        book.setBookPackaging(request.isBookPackaging());
-        book.setBookState(request.getBookState());
-        book.setBookStock(request.getBookStock());
-        book.setBookRegularPrice(request.getBookRegularPrice());
-        book.setBookSalePrice(request.getBookSalePrice());
-        book.setBookImage(request.getBookImage());
+        book.setIsbn(request.isbn());
+        book.setBookName(request.bookName());
+        book.setBookDescription(request.bookDescription());
+        book.setBookPublisher(publisher);
+        book.setBookPublicationDate(request.bookPublicationDate());
+        book.setBookIndex(request.bookIndex());
+        book.setBookPackaging(request.bookPackaging());
+        book.setBookState(request.bookState());
+        book.setBookStock(request.bookStock());
+        book.setBookRegularPrice(request.bookRegularPrice());
+        book.setBookSalePrice(request.bookSalePrice());
+        book.setBookImage(request.bookImage());
 
         // 누락된 필드 기본값 설정 (리뷰 점수는 등록 시 0.0)
         book.setBookReviewRate(0.0);
@@ -79,20 +86,20 @@ public class BookServiceImpl implements BookService {
 
         // 2. 핵심 로직: 할인율을 적용하여 판매가를 계산합니다.
         int regularPrice = book.getBookRegularPrice();
-        double discountRate = request.getDiscountRate();
+        double discountRate = request.discountRate();
 
         // 판매가 계산: 정가 * (1 - 할인율/100)
         int newSalePrice = (int) Math.round(regularPrice * (1 - discountRate / 100.0));
 
         // 3. 요청받은 값과 계산된 판매가로 Entity 필드를 수정합니다.
         // (JPA의 변경 감지(Dirty Checking) 기능으로 자동 저장됩니다.)
-        book.setBookName(request.getBookName());
-        book.setBookDescription(request.getBookDescription());
-        book.setBookIndex(request.getBookIndex());
-        book.setBookPackaging(request.isBookPackaging());
-        book.setBookState(request.getBookState());
-        book.setBookStock(request.getBookStock());
-        book.setBookImage(request.getBookImage());
+        book.setBookName(request.bookName());
+        book.setBookDescription(request.bookDescription());
+        book.setBookIndex(request.bookIndex());
+        book.setBookPackaging(request.bookPackaging());
+        book.setBookState(request.bookState());
+        book.setBookStock(request.bookStock());
+        book.setBookImage(request.bookImage());
 
         // 계산된 판매가 반영
         book.setBookSalePrice(newSalePrice);

@@ -89,5 +89,5 @@ public class Book {
     private Set<BookCategory> bookCategories = new HashSet<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    private Publisher publisher;
+    private Publisher bookPublisher;
 }

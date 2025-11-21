@@ -7,7 +7,7 @@ POST http://localhost:10413/api/books
 Content-Type: application/json
 
 {
-  "isbn": "9781111222233",
+  "isbn": "9781111222234",
   "bookName": "[HTTP Client] 새로 등록한 책",
   "bookDescription": "IntelliJ에서 등록 테스트",
   "bookPublisher": "IntelliJ 출판사",

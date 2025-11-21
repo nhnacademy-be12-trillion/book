@@ -82,7 +82,7 @@ public class BookParser {
                         // 출판사
                         Publisher publisher = new Publisher(publisherNm);
                         if (!publisher.getPublisherName().isBlank()) {
-                            book.setPublisher(publisher);
+                            book.setBookPublisher(publisher);
                         }
 
                         if (!authrNm.isBlank()) {
