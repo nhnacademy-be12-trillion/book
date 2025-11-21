@@ -85,12 +85,18 @@ public class BookParser {
                             book.setPublisher(publisher);
                         }
 
-                        Author author = new Author(authrNm);
-                        if (!author.getAuthorName().isBlank()) {
-                            // 도서-작가
-                            BookAuthor bookAuthor = new BookAuthor(author, book);
+                        if (!authrNm.isBlank()) {
+                            String[] authors = authrNm.split(",");
 
-                            book.getBookAuthors().add(bookAuthor);
+                            // 도서-작가
+                            Arrays.stream(authors)
+                                    .map(String::trim)
+                                    .forEach(authorStr -> {
+                                        Author author = new Author(authorStr);
+                                        BookAuthor bookAuthor = new BookAuthor(author, book);
+
+                                        book.getBookAuthors().add(bookAuthor);
+                                    });
                         }
 
                         // 도서-카테고리
