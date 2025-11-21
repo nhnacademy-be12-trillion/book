@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -79,4 +81,13 @@ public class Book {
     // 책 이미지 -> 파일 테이블에 따로 빼기?
     @CsvBindByName(column = "IMAGE_URL")
     private String bookImage;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BookAuthor> bookAuthors = new HashSet<>();
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BookCategory> bookCategories = new HashSet<>();
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private Publisher publisher;
 }

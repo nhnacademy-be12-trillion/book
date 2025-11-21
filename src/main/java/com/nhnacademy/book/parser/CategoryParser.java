@@ -1,7 +1,6 @@
 package com.nhnacademy.book.parser;
 
 import com.nhnacademy.book.entity.Category;
-import com.nhnacademy.book.repository.CategoryRepository;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
@@ -18,9 +17,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Component
 public class CategoryParser {
-    private final CategoryRepository categoryRepository;
 
-    public void parse(Reader reader) throws IOException, CsvException {
+    public List<Category> parse(Reader reader) throws IOException, CsvException {
         Map<Long, Category> categoryMapByCode = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
@@ -48,8 +46,7 @@ public class CategoryParser {
                         }
                     });
         }
-
-        categoryRepository.saveAll(categoryMapByCode.values());
+        return new ArrayList<>(categoryMapByCode.values());
     }
 
     private Long getParentCode(Long code) {

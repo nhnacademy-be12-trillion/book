@@ -26,7 +26,7 @@ public class CsvParser implements CommandLineRunner {
     private final BookParser bookParser;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
 
         // 카테고리 파싱 시작
         if (categoryRepository.count() > 0) {
@@ -41,8 +41,9 @@ public class CsvParser implements CommandLineRunner {
 
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
 
-                categoryParser.parse(reader);
+                List<Category> categories = categoryParser.parse(reader);
 
+                categoryRepository.saveAll(categories);
             } catch (Exception e) {
                 log.info("[CSV] 카테고리 데이터 파싱 실패: {}", e.getMessage(), e);
             }
@@ -62,8 +63,11 @@ public class CsvParser implements CommandLineRunner {
 
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
 
-                bookParser.parse(reader);
+                List<Book> books = bookParser.parse(reader);
 
+                bookRepository.saveAll(books);
+
+                log.info("[CSV] 총 {} 건의 도서 데이터 저장 완료.", books.size());
             } catch (Exception e) {
                 log.info("[CSV] 도서 데이터 파싱 실패: {}", e.getMessage(), e);
             }
