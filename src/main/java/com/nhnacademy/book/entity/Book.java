@@ -88,6 +88,9 @@ public class Book {
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BookCategory> bookCategories = new HashSet<>();
 
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BookTag> bookTags = new HashSet<>();
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     private Publisher bookPublisher;
 }

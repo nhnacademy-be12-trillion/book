@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class BookParser {
     private final CustomDateConverter customDateConverter;
     private final CategoryRepository categoryRepository;
+    private final TagRepository tagRepository;
 
     public List<Book> parse(Reader reader) throws IOException, CsvException {
         List<String[]> allLines;
@@ -31,6 +32,9 @@ public class BookParser {
 
         Map<Long, Category> categoryMap = categoryRepository.findAll().stream()
                 .collect(Collectors.toMap(Category::getCategoryId, Function.identity()));
+
+        Map<String, Tag> tagMap = tagRepository.findAll().stream()
+                .collect(Collectors.toMap(Tag::getTagName, Function.identity()));
 
         try (CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
             allLines = csvReader.readAll();
@@ -76,6 +80,7 @@ public class BookParser {
                             imageUrl.isEmpty() ? "/images/default_book.png" : imageUrl,
                             new HashSet<>(),
                             new HashSet<>(),
+                            new HashSet<>(),
                             null
                         );
 
@@ -90,13 +95,13 @@ public class BookParser {
 
                             // 도서-작가
                             Arrays.stream(authors)
-                                    .map(String::trim)
-                                    .forEach(authorStr -> {
-                                        Author author = new Author(authorStr);
-                                        BookAuthor bookAuthor = new BookAuthor(author, book);
+                                .map(String::trim)
+                                .forEach(authorStr -> {
+                                    Author author = new Author(authorStr);
+                                    BookAuthor bookAuthor = new BookAuthor(author, book);
 
-                                        book.getBookAuthors().add(bookAuthor);
-                                    });
+                                    book.getBookAuthors().add(bookAuthor);
+                                });
                         }
 
                         // 도서-카테고리
@@ -104,13 +109,23 @@ public class BookParser {
                             long categoryId = (long) Double.parseDouble(kdcNm);
                             Category category = categoryMap.get(categoryId);
                             if (category != null) {
+                                // 도서-카테고리
                                 BookCategory bookCategory = new BookCategory(category, book);
                                 book.getBookCategories().add(bookCategory);
+
+                                Tag tag = tagMap.get(category.getCategoryName());
+
+                                // 도서-태그
+                                BookTag bookTag = new BookTag(tag, book);
+                                book.getBookTags().add(bookTag);
                             }
                         }
 
-                        books.add(book);
-                    } catch (CsvDataTypeMismatchException e) {
+                        // 출판일, 설명, 작가, 출판사, 카테고리가 모두 존재하는 도서만 추가
+                        if (book.getBookPublicationDate() != null && !book.getBookDescription().isEmpty() && !book.getBookCategories().isEmpty() && book.getPublisher() != null && !book.getBookAuthors().isEmpty()) {
+                            books.add(book);
+                        }
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 });
