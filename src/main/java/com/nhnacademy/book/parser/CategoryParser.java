@@ -5,6 +5,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,11 +15,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class CategoryParser {
 
-    public List<Category> parse(Reader reader) throws IOException, CsvException {
+    public List<Category> parse(Reader reader) {
         Map<Long, Category> categoryMapByCode = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
@@ -37,7 +39,7 @@ public class CategoryParser {
                     });
 
             // 2. 카테고리 연관 관계 매핑
-            categoryMapByCode.values().stream()
+            categoryMapByCode.values()
                     .forEach(category -> {
                         Long parentCode = getParentCode(category.getCategoryId());
                         if (parentCode != null) {
@@ -45,7 +47,10 @@ public class CategoryParser {
                             category.setParent(parent);
                         }
                     });
+        }  catch (Exception e) {
+            log.error("카테고리 파싱 실패: {}", e.getMessage(), e);
         }
+
         return new ArrayList<>(categoryMapByCode.values());
     }
 

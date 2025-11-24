@@ -2,8 +2,10 @@ package com.nhnacademy.book.parser;
 
 import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.Category;
+import com.nhnacademy.book.entity.Tag;
 import com.nhnacademy.book.repository.BookRepository;
 import com.nhnacademy.book.repository.CategoryRepository;
+import com.nhnacademy.book.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -24,6 +26,7 @@ public class CsvParser implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final CategoryParser categoryParser;
     private final BookParser bookParser;
+    private final TagRepository tagRepository;
 
     @Override
     public void run(String... args) {
@@ -42,6 +45,16 @@ public class CsvParser implements CommandLineRunner {
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
 
                 List<Category> categories = categoryParser.parse(reader);
+
+                // 태그 일단 카테고리 재사용
+                List<Tag> tags = categories.stream()
+                        .map(Category::getCategoryName)
+                        .distinct()
+                        .map(Tag::new)
+                        .toList();
+
+                tagRepository.saveAll(tags);
+                // 태그 저장 끝
 
                 categoryRepository.saveAll(categories);
             } catch (Exception e) {
