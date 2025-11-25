@@ -14,7 +14,7 @@ public class CustomPriceConverter extends AbstractBeanField<Book, Integer> { // 
             return 0; // CSV 값이 비어있으면 0
         }
 
-        // value.trim()을 사용하여 앞뒤 공백을 모두 제거합니다.
+        // value.trim()을 사용하여 앞뒤 공백을 모두 제거
         String trimmedValue = value.trim();
 
         if (trimmedValue.isEmpty()) {
@@ -32,7 +32,7 @@ public class CustomPriceConverter extends AbstractBeanField<Book, Integer> { // 
             }
         } catch (NumberFormatException e) {
             log.warn("[CSV] 가격 형식 파싱 실패 ({}): 기본값(0) 사용", value);
-            // 예외를 던지는 대신 0을 반환하여 파싱을 계속 진행합니다.
+            // 예외를 던지는 대신 0을 반환하여 파싱을 계속 진행
             return 0;
         }
     }

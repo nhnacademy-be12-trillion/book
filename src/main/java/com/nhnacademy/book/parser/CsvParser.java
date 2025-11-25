@@ -69,8 +69,7 @@ public class CsvParser implements CommandLineRunner {
             log.info("[CSV] 도서 데이터베이스가 비어있습니다. CSV 파싱을 시작합니다...");
 
             try {
-                // 파일 경로는 "data/book.csv" 또는 "book.csv" (resources 폴더 기준)
-                String filePath = "book.csv"; // (resources/book.csv를 가리킴)
+                String filePath = "book.csv";
 
                 ClassPathResource resource = new ClassPathResource(filePath);
 

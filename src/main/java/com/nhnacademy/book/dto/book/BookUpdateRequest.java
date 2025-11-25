@@ -1,4 +1,4 @@
-package com.nhnacademy.book.dto;
+package com.nhnacademy.book.dto.book;
 
 import com.nhnacademy.book.entity.BookState;
 import lombok.Getter;

@@ -1,9 +1,15 @@
-### 1. 도서 목록 조회 (Read - List)
-GET http://localhost:10413/api/books?page=0&size=5
+@host = http://localhost:10413
+
+@bookId = 1
+@userId = 1
+@targetReviewId = 1
+
+// 1. 도서 목록 조회 (Read - List)
+GET {{host}}/api/books?page=0&size=5
 
 ###
-### 2. 도서 등록 (Create)
-POST http://localhost:10413/api/books
+// 2. 도서 등록 (Create) (테스트용 도서 생성)
+POST {{host}}/api/books
 Content-Type: application/json
 
 {
@@ -18,13 +24,13 @@ Content-Type: application/json
   "bookStock": 100,
   "bookRegularPrice": 50000,
   "bookSalePrice": 50000,
-  "bookImage": "/img/intellij_test.png"
+  "bookImage": "/images/intellij_test.png"
 }
 
 ###
 ### 3. 도서 수정 (Update - PUT 매핑)
-# (주의: {bookId}는 실제 DB에 존재하는 ID로 바꿔서 테스트하세요. 예: 1)
-PUT http://localhost:10413/api/books/1
+// (할인율 20% 적용 테스트)
+PUT {{host}}/api/books/{{bookId}}
 Content-Type: application/json
 
 {
@@ -35,10 +41,57 @@ Content-Type: application/json
   "bookState": "ON_SALE",
   "bookStock": 95,
   "discountRate": 20.0,
-  "bookImage": "/img/new_update.png"
+  "bookImage": "/images/new_update.png"
 }
 
 ###
 ### 4. 도서 삭제 (Delete)
-# (주의: {bookId}는 실제 DB에 존재하는 ID로 바꿔서 테스트하세요. 예: 2)
-DELETE http://localhost:10413/api/books/1
+// (논리적 삭제: bookState가 SALE_END로 변경됨)
+DELETE {{host}}/api/books/{{bookId}}
+
+###
+// 5. C (CREATE) - 리뷰 작성
+// Gateway 인증 시뮬 - X-USER-ID 헤더 전달
+POST {{host}}/api/reviews
+Content-Type: application/json
+X-USER-ID: {{userId}}
+
+{
+  "bookId": {{bookId}},
+  "reviewRate": 5, 
+  "reviewContents": "첫 번째 리뷰 작성! 평점 5점 부여."
+}
+
+###
+// 6. R (READ) - 특정 도서의 리뷰 목록 조회
+GET {{host}}/api/reviews/books/{{bookId}}
+Accept: application/json
+
+###
+// 7. U (UPDATE) - 리뷰 수정 (소유자 성공 케이스)
+// (Service 내부의 인가 로직 검증)
+PUT {{host}}/api/reviews/{{targetReviewId}}
+Content-Type: application/json
+X-USER-ID: {{userId}}
+
+{
+  "reviewRate": 3,
+  "reviewContents": "수정된 내용입니다. 평점을 3점으로 하향 조정."
+}
+
+###
+// 8. R (VERIFICATION) - 도서 상세 조회 (평균 평점 업데이트 확인)
+// PUT 요청 후, Book의 bookReviewRate가 재계산됐는지 확인
+GET {{host}}/api/books/{{bookId}}
+Accept: application/json
+
+###
+// 9. U (UPDATE) - 리뷰 수정 (타인 실패 케이스)
+PUT {{host}}/api/reviews/{{targetReviewId}}
+Content-Type: application/json
+X-USER-ID: 99
+
+{
+  "reviewRate": 1,
+  "reviewContents": "타인 수정 시도입니다."
+}

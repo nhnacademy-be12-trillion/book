@@ -1,9 +1,9 @@
 package com.nhnacademy.book.service;
 
-import com.nhnacademy.book.dto.BookCreateRequest;
-import com.nhnacademy.book.dto.BookDetailResponse;
-import com.nhnacademy.book.dto.BookListResponse;
-import com.nhnacademy.book.dto.BookUpdateRequest;
+import com.nhnacademy.book.dto.book.BookCreateRequest;
+import com.nhnacademy.book.dto.book.BookDetailResponse;
+import com.nhnacademy.book.dto.book.BookListResponse;
+import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

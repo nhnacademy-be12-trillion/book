@@ -1,4 +1,4 @@
-package com.nhnacademy.book.dto;
+package com.nhnacademy.book.dto.book;
 
 import com.nhnacademy.book.entity.BookState;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 public class BookCreateRequest {
-    // bookId, bookReviewRate 값을 직접 넣는 게 아닌 컬럼 제외
+    // bookId, bookReviewRate 등 값을 직접 넣는 게 아닌 컬럼 제외
     private String isbn;
     private String bookName;
     private String bookDescription;

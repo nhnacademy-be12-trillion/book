@@ -26,7 +26,7 @@ public class CategoryParser {
         try (CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) {
             List<String[]> allLines = csvReader.readAll();
 
-            // 1. 카테고리 객체 생성
+            // 카테고리 객체 생성
             allLines.stream()
                     .filter(line -> !(line.length < 2) && !(line[0].trim().isEmpty()))
                     .forEach(line -> {
@@ -38,7 +38,7 @@ public class CategoryParser {
                         categoryMapByCode.put(id, category);
                     });
 
-            // 2. 카테고리 연관 관계 매핑
+            // 카테고리 연관 관계 매핑
             categoryMapByCode.values()
                     .forEach(category -> {
                         Long parentCode = getParentCode(category.getCategoryId());

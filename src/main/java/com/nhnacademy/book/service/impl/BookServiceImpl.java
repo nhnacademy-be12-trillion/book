@@ -1,9 +1,9 @@
 package com.nhnacademy.book.service.impl;
 
-import com.nhnacademy.book.dto.BookCreateRequest;
-import com.nhnacademy.book.dto.BookDetailResponse;
-import com.nhnacademy.book.dto.BookListResponse;
-import com.nhnacademy.book.dto.BookUpdateRequest;
+import com.nhnacademy.book.dto.book.BookCreateRequest;
+import com.nhnacademy.book.dto.book.BookDetailResponse;
+import com.nhnacademy.book.dto.book.BookListResponse;
+import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.BookState;
 import com.nhnacademy.book.repository.BookRepository;
@@ -21,7 +21,7 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
 
-    // 1. 도서 목록 조회 구현 (BookListResponse 사용)
+    // 도서 목록 조회 구현 (BookListResponse 사용)
     @Override
     public Page<BookListResponse> getBooks(Pageable pageable) {
         // JPA로 모든 Entity를 가져온 후, List DTO로 변환하여 반환
@@ -29,7 +29,7 @@ public class BookServiceImpl implements BookService {
                 .map(BookListResponse::from);
     }
 
-    // 2. 도서 상세 조회 구현 (BookDetailResponse 사용)
+    // 도서 상세 조회 구현 (BookDetailResponse 사용)
     @Override
     public BookDetailResponse getBook(Long bookId) {
         Book book = bookRepository.findById(bookId)
@@ -39,7 +39,7 @@ public class BookServiceImpl implements BookService {
         return BookDetailResponse.from(book);
     }
 
-    // 3. 도서 등록 구현 (BookCreateRequest 사용)
+    // 도서 등록 구현 (BookCreateRequest 사용)
     @Override
     @Transactional // 쓰기 작업이므로 트랜잭션 필요
     public Long createBook(BookCreateRequest request) {
@@ -63,14 +63,14 @@ public class BookServiceImpl implements BookService {
         // 누락된 필드 기본값 설정 (리뷰 점수는 등록 시 0.0)
         book.setBookReviewRate(0.0);
 
-        // 2. DB 저장 및 ID 반환
+        // DB 저장 및 ID 반환
         Book savedBook = bookRepository.save(book);
         return savedBook.getBookId();
     }
 
-    // 4. 도서 정보 수정 (Update Request DTO 사용)
+    // 도서 정보 수정 (Update Request DTO 사용)
     @Override
-    @Transactional // 쓰기 작업이므로 @Transactional을 붙여야 합니다.
+    @Transactional // 쓰기 작업이므로 트랜잭션 필요
     public void updateBook(Long bookId, BookUpdateRequest request) {
 
         // 1. 수정할 Entity를 DB에서 조회 (없으면 예외 발생)
