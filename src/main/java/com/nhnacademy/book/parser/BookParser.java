@@ -122,7 +122,7 @@ public class BookParser {
                         }
 
                         // 출판일, 설명, 작가, 출판사, 카테고리가 모두 존재하는 도서만 추가
-                        if (book.getBookPublicationDate() != null && !book.getBookDescription().isEmpty() && !book.getBookCategories().isEmpty() && book.getPublisher() != null && !book.getBookAuthors().isEmpty()) {
+                        if (book.getBookPublicationDate() != null && !book.getBookDescription().isEmpty() && !book.getBookCategories().isEmpty() && book.getBookPublisher() != null && !book.getBookAuthors().isEmpty()) {
                             books.add(book);
                         }
                     } catch (Exception e) {
