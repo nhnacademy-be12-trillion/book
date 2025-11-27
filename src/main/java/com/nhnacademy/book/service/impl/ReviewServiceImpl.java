@@ -33,7 +33,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public Long createReview(ReviewCreateRequest request, Long memberId) {
 
-        // 1. 도서 및 회원 존재 확인 (Gateway ID는 신뢰하지만, DB에 객체가 있어야 JPA 연결 가능)
+        // 도서 및 회원 존재 확인 (Gateway ID는 신뢰하지만, DB에 객체가 있어야 JPA 연결 가능)
         Book book = bookRepository.findById(request.bookId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서입니다."));
         Member member = memberRepository.findById(memberId)

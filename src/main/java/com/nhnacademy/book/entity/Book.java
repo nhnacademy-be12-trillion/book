@@ -42,10 +42,6 @@ public class Book {
     @CsvBindByName(column = "BOOK_INTRCN_CN")
     private String bookDescription;
 
-//    // 출판사 -> 테이블 분리
-//    @CsvBindByName(column = "PUBLISHER_NM")
-//    private String bookPublisher;
-
     //출판 일시
     @CsvCustomBindByName(
             column = "TWO_PBLICTE_DE",
@@ -53,6 +49,7 @@ public class Book {
     private LocalDate bookPublicationDate;
 
     // 목차
+    @Lob
     private String bookIndex;
 
     // 포장 여부

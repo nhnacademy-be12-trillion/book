@@ -5,6 +5,7 @@ import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import com.nhnacademy.book.dto.review.ReviewResponse;
+import com.nhnacademy.book.service.BookIndexService;
 import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class BookController {
 
     private final BookService bookService;
     private final ReviewService reviewService;
+    private final BookIndexService bookIndexService;
 
     // 도서 목록 조회 API (BookListResponse 반환)
     // GET /api/books?page=0&size=20
@@ -66,6 +68,27 @@ public class BookController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/toc/augment")
+    public ResponseEntity<String> augmentBookIndices(
+            @PageableDefault(size = 800) Pageable pageable) {
+
+        int count = bookIndexService.augmentBookIndexBatch(pageable);
+
+        return ResponseEntity.ok("목차 증강 작업 완료. 총 " + count + "권의 도서를 처리했습니다.");
+    }
+
+    @GetMapping("/toc/{isbn}")
+    public ResponseEntity<String> getBookToc(@PathVariable String isbn) {
+
+        // 새로 만든 단일 조회 메서드 사용
+        String toc = bookIndexService.getTableOfContentsByIsbn(isbn);
+
+        if (toc == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(toc);
+    }
+
     // 도서별 리뷰 목록 조회 API
     // GET /api/books/{bookId}/reviews?page=0&size=5
     @GetMapping("/{bookId}/reviews")
@@ -75,4 +98,7 @@ public class BookController {
 
         return ResponseEntity.ok(reviewService.getReviewsByBookId(bookId, pageable));
     }
+
+
+
 }

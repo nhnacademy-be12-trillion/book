@@ -95,3 +95,7 @@ X-USER-ID: 99
   "reviewRate": 1,
   "reviewContents": "타인 수정 시도입니다."
 }
+
+
+### 알라딘 API toc INSERT
+POST {{host}}/api/books/toc/augment
