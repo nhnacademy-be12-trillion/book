@@ -26,7 +26,6 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final BookRepository bookRepository;
     private final MemberRepository memberRepository;
-    // private final PointService pointService;
 
     // 리뷰 작성
     @Override
@@ -51,8 +50,6 @@ public class ReviewServiceImpl implements ReviewService {
                 .build();
 
         Review savedReview = reviewRepository.save(review);
-
-        // TODO: [포인트 적립] pointService.addReviewPoints 호출 로직 추가 필요
 
         // 평점 업데이트
         updateBookAverageRating(book.getBookId());

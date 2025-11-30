@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 조회 최적화를 위해 기본 설정
+@Transactional
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
@@ -113,5 +113,9 @@ public class BookServiceImpl implements BookService {
 
         // @Transactional이 설정되어 있으므로, 이 시점에 변경 감지(Dirty Checking)를 통해
         // 별도로 save()를 호출하지 않아도 DB에 상태 자동 반영
+    }
+
+    public void increaseViewCount(Long bookId) {
+        bookRepository.updateViewCount(bookId);
     }
 }

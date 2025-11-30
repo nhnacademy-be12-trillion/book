@@ -101,7 +101,8 @@ public class BookParser {
                                     new HashSet<>(), // authors
                                     new HashSet<>(), // categories
                                     new HashSet<>(), // tags
-                                    null // publisher
+                                    null, // publisher
+                                    0 // viewCount
                             );
 
                             // 출판사 연결

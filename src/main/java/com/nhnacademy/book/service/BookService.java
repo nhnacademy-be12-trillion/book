@@ -23,4 +23,7 @@ public interface BookService {
 
     // 도서 삭제
     void deleteBook(Long bookId);
+
+    // 도서 조회수
+    void increaseViewCount(Long bookId);
 }

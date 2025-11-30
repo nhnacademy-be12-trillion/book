@@ -90,4 +90,8 @@ public class Book {
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     private Publisher publisher;
+
+    @Column(columnDefinition = "integer default 0", nullable = false)
+    private int viewCount;
+
 }

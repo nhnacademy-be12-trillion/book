@@ -17,7 +17,8 @@ public record BookDetailResponse(
         int bookRegularPrice,
         int bookSalePrice,
         double bookReviewRate,
-        String bookImage
+        String bookImage,
+        int viewCount
 ) {
     public static BookDetailResponse from(Book book) {
         return new BookDetailResponse(
@@ -32,7 +33,8 @@ public record BookDetailResponse(
                 book.getBookRegularPrice(),
                 book.getBookSalePrice(),
                 book.getBookReviewRate(),
-                book.getBookImage()
+                book.getBookImage(),
+                book.getViewCount()
         );
     }
 }

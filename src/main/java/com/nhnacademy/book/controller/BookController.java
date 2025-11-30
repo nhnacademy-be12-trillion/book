@@ -39,7 +39,8 @@ public class BookController {
     // GET /api/books/{bookId}
     @GetMapping("/{bookId}")
     public ResponseEntity<BookDetailResponse> getBook(@PathVariable Long bookId) {
-
+        // 조회수 증가 (DB 바로 안 가고 메모리에 쌓임)
+        bookService.increaseViewCount(bookId);
         return ResponseEntity.ok(bookService.getBook(bookId));
     }
 
