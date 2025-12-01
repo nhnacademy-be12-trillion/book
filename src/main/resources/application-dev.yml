@@ -1,0 +1,44 @@
+server:
+  port: 10413
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://s4.java21.net:13306/project_be12_team1
+    username: project_be12_team1
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    properties:
+      hibernate:
+
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+        jdbc:
+          batch_size: 1000
+          order_inserts: true
+  cloud:
+    config:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+
+  ## 알라딘 API
+aladin:
+  api:
+    ttb-key: ${ALADIN_TTBKEY}
+    url: "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx"
+
+book:
+  default-image: "/images/default_book.png"
+
+gemini:
+  api:
+    gemini-key: ${GEMINI_KEY}
