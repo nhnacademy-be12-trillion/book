@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 도서 등록 데모</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .book-cover {
+            max-width: 200px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div id="loading" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+    <h4 class="mt-3 text-primary">AI가 도서 정보를 분석 중입니다...</h4>
+    <p class="text-muted">Gemini가 목차와 요약을 작성하고 있습니다 (약 3~5초 소요)</p>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">🤖 AI 도서 등록 시스템</h3>
+                </div>
+                <div class="card-body">
+
+                    <div class="input-group mb-4">
+                        <input type="text" id="isbnInput" class="form-control form-control-lg" placeholder="ISBN 13자리를 입력하세요 (예: 9791162245538)">
+                        <button class="btn btn-dark btn-lg" type="button" onclick="fetchBookInfo()">
+                            🔍 AI 검색
+                        </button>
+                    </div>
+
+                    <hr>
+
+                    <form id="bookForm">
+                        <div class="row mb-3">
+                            <div class="col-md-4 text-center">
+                                <img id="previewImage" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/150px-No-Image-Placeholder.svg.png" class="book-cover img-fluid rounded mb-2">
+                                <input type="hidden" id="bookImage">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">ISBN</label>
+                                    <input type="text" class="form-control" id="isbn" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">도서명</label>
+                                    <input type="text" class="form-control fw-bold" id="bookName">
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <label class="form-label">출판사</label>
+                                        <input type="text" class="form-control" id="bookPublisher">
+                                    </div>
+                                    <div class="col">
+                                        <label class="form-label">출판일</label>
+                                        <input type="date" class="form-control" id="bookPublicationDate">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label">정가</label>
+                                <input type="number" class="form-control" id="bookRegularPrice">
+                            </div>
+                            <div class="col">
+                                <label class="form-label">판매가</label>
+                                <input type="number" class="form-control" id="bookSalePrice">
+                            </div>
+                            <div class="col">
+                                <label class="form-label">재고</label>
+                                <input type="number" class="form-control" id="bookStock" value="10">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-primary">✨ AI 책 소개 (Description)</label>
+                            <textarea class="form-control" id="bookDescription" rows="5"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-success">📚 AI/알라딘 목차 (Index)</label>
+                            <textarea class="form-control" id="bookIndex" rows="6"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-primary btn-lg" onclick="registerBook()">
+                                도서 등록 완료
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // [중요] 사용 중인 서버 포트 확인 (기존 로그 기반 10413 설정 유지)
+    const API_BASE_URL = 'http://localhost:10413/api/books';
+
+    // 1. ISBN으로 정보 조회 (GET)
+    async function fetchBookInfo() {
+        const isbn = document.getElementById('isbnInput').value;
+        if (!isbn) {
+            alert('ISBN을 입력해주세요!');
+            return;
+        }
+
+        document.getElementById('loading').style.display = 'flex'; // 로딩 시작
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/isbn/${isbn}`);
+            if (!response.ok) throw new Error('도서 정보를 찾을 수 없습니다.');
+
+            const data = await response.json();
+            fillForm(data); // 폼 채우기
+        } catch (error) {
+            alert(error.message);
+            console.error(error);
+        } finally {
+            document.getElementById('loading').style.display = 'none'; // 로딩 끝
+        }
+    }
+
+    // 2. 받아온 데이터 폼에 채우기
+    function fillForm(data) {
+        document.getElementById('isbn').value = data.isbn;
+        document.getElementById('bookName').value = data.bookName;
+        document.getElementById('bookPublisher').value = data.bookPublisher;
+        document.getElementById('bookPublicationDate').value = data.bookPublicationDate;
+        document.getElementById('bookRegularPrice').value = data.bookRegularPrice;
+        document.getElementById('bookSalePrice').value = data.bookSalePrice;
+        document.getElementById('bookDescription').value = data.bookDescription;
+        document.getElementById('bookIndex').value = data.bookIndex;
+        document.getElementById('bookImage').value = data.bookImage;
+
+        // 이미지가 있으면 그걸 쓰고, 없으면 기본 이미지
+        if (data.bookImage) {
+            document.getElementById('previewImage').src = data.bookImage;
+        }
+    }
+
+    // 3. 최종 등록 요청 (POST)
+    async function registerBook() {
+        const formData = {
+            isbn: document.getElementById('isbn').value,
+            bookName: document.getElementById('bookName').value,
+            bookDescription: document.getElementById('bookDescription').value,
+            bookPublisher: document.getElementById('bookPublisher').value,
+            bookPublicationDate: document.getElementById('bookPublicationDate').value,
+            bookIndex: document.getElementById('bookIndex').value,
+            bookPackaging: true, // 기본값
+
+            // [수정 핵심] Enum 타입 불일치 에러 해결 ("SELLING" -> "ON_SALE")
+            bookState: "ON_SALE",
+
+            bookStock: parseInt(document.getElementById('bookStock').value),
+            bookRegularPrice: parseInt(document.getElementById('bookRegularPrice').value),
+            bookSalePrice: parseInt(document.getElementById('bookSalePrice').value),
+            bookImage: document.getElementById('bookImage').value
+        };
+
+        try {
+            const response = await fetch(API_BASE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                alert('도서가 성공적으로 등록되었습니다!');
+                location.reload();
+            } else {
+                // 에러 메시지를 좀 더 자세히 보기 위해
+                const errorText = await response.text();
+                console.error("등록 실패:", errorText);
+                alert('등록 실패! (콘솔 로그 확인)');
+            }
+        } catch (error) {
+            console.error('Network Error:', error);
+            alert('등록 중 네트워크 오류 발생');
+        }
+    }
+</script>
+</body>
+</html>
