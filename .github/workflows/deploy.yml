@@ -21,7 +21,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -64,8 +63,8 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            SERVICE_NAME1="book-peer1"
-            SERVICE_NAME2="book-peer2"
+            SERVICE_NAME1="trillion-book-peer1"
+            SERVICE_NAME2="trillion-book-peer2"
 
             echo "SSH 접속 및 디렉토리 이동..."
             mkdir -p ${{ env.DEPLOY_DIR }}
@@ -76,7 +75,7 @@ jobs:
 
             echo "Book-service 롤링 업데이트 시작"
 
-            echo "최신 이미지 Pull 및 Peer 2 재시작..."
+            echo "최신 이미지 Pull 및 Peer 1 재시작..."
             docker-compose pull ${SERVICE_NAME1}
             docker-compose up -d --no-deps ${SERVICE_NAME1}
             sleep 10
