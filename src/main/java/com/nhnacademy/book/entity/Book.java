@@ -94,4 +94,16 @@ public class Book {
     @Column(columnDefinition = "integer default 0", nullable = false)
     private int viewCount;
 
+    public void deductStock(int quantity) {
+        int restStock = this.bookStock - quantity;
+        if (restStock < 0) {
+            throw new IllegalArgumentException("재고가 부족합니다.");
+        }
+        this.bookStock = restStock;
+
+        // 0이 되면 품절 처리
+        if (this.bookStock == 0) {
+            this.bookState = BookState.SOLD_OUT;
+        }
+    }
 }

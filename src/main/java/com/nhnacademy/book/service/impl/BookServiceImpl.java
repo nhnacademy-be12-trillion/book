@@ -118,4 +118,15 @@ public class BookServiceImpl implements BookService {
     public void increaseViewCount(Long bookId) {
         bookRepository.updateViewCount(bookId);
     }
+
+    @Override
+    @Transactional
+    public void deductStock(Long bookId, int quantity) {
+        // 책 가져오기
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("책이 없습니다."));
+
+        // 엔티티에게 "재고 깎아" 시키기 (상태 변경 로직은 엔티티 안에 있으니 알아서 됨)
+        book.deductStock(quantity);
+    }
 }
