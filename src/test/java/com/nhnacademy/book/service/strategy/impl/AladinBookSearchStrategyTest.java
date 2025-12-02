@@ -36,8 +36,8 @@ class AladinBookSearchStrategyTest {
     }
 
     @Test
-    @DisplayName("API로 부터 받은 응답 데이터를 createRequest dto 로 변환")
-    void convertDto_Success(){
+    @DisplayName("알라딘 API로 책 정보 조회 성공")
+    void searchBook_Success(){
         String isbn = "1234567890123";
 
         AladinResponse.SubInfo subInfo = new AladinResponse.SubInfo("목차입니다", null, null);
@@ -50,10 +50,10 @@ class AladinBookSearchStrategyTest {
 
         BookCreateRequest result = strategy.searchBook(isbn);
 
-        assertEquals(isbn, result.isbn());
-        assertEquals("테스트 책",result.bookName());
-        assertEquals("목차입니다",result.bookIndex());
-        assertEquals("2023-10-01",result.bookPublicationDate().toString());
+        assertThat(result.isbn()).isEqualTo(isbn);
+        assertThat(result.bookName()).isEqualTo("테스트 책");
+        assertThat(result.bookIndex()).isEqualTo("목차입니다");
+        assertThat(result.bookPublicationDate()).isEqualTo(java.time.LocalDate.parse("2023-10-01"));
     }
 
     @Test
