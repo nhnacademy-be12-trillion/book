@@ -29,19 +29,15 @@ Content-Type: application/json
 
 ###
 // 도서 수정 (Update - PUT 매핑)
-// (할인율 20% 적용 테스트)
+// (할인율 10% 적용 테스트)
 PUT {{host}}/api/books/{{bookId}}
 Content-Type: application/json
 
 {
-  "bookName": "[수정 테스트] 제목 수정 완료",
-  "bookDescription": "PUT 요청으로 할인율 적용",
-  "bookIndex": "목차: 수정됨",
   "bookPackaging": true,
   "bookState": "ON_SALE",
-  "bookStock": 95,
-  "discountRate": 20.0,
-  "bookImage": "/images/new_update.png"
+  "bookStock": 100,
+  "discountRate": 10.0
 }
 
 ###
@@ -109,3 +105,13 @@ POST {{host}}/api/books/toc/augment
 POST {{host}}/api/wishlists/{{bookId}}
 Content-Type: application/json
 X-USER-ID: {{userId}}
+
+###
+// 주문 발생 - 재고 차감 (주문 서비스 호출 시뮬레이션)
+// 실행 시: 해당 도서의 bookStock이 감소하고, 0이 되면 bookState가 SOLD_OUT으로 변경됨
+POST {{host}}/api/books/{{bookId}}/deduct-stock
+Content-Type: application/json
+
+{
+  "quantity": 1
+}

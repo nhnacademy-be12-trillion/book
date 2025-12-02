@@ -110,5 +110,15 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // 주문 서비스가 호출할 API
+    // 요청 예시: POST /api/books/1/deduct-stock  { "quantity": 2 }
+    @PostMapping("/{bookId}/deduct-stock")
+    public ResponseEntity<Void> deductStock(@PathVariable Long bookId, @RequestBody StockRequest request) {
 
+        bookService.deductStock(bookId, request.quantity());
+        return ResponseEntity.ok().build();
+    }
+
+    // DTO는 클래스 밑에 간단하게 record로 만들어도 됨
+    public record StockRequest(int quantity) {}
 }

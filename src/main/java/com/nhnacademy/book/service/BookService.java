@@ -26,4 +26,7 @@ public interface BookService {
 
     // 도서 조회수
     void increaseViewCount(Long bookId);
+
+    // 도서 수량
+    public void deductStock(Long bookId, int quantity);
 }
