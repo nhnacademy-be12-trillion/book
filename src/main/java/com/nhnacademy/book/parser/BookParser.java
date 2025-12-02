@@ -91,11 +91,11 @@ public class BookParser {
                                     bookIntrcnCn,
                                     (LocalDate) customDateConverter.convert(twoPblicteDe),
                                     "", // bookIndex (목차)는 빈 문자열로 초기화
-                                    false,
+                                    true, // 포장은 기본으로 있는걸로 가정.
                                     BookState.ON_SALE,
                                     100, // 재고
                                     prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue), // 정가
-                                    0, // 판매가 (초기값 0)
+                                    prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue), // 판매가 == 초기 정가랑 같음 지정 안해주면
                                     0, // 리뷰 점수
                                     imageUrl.isEmpty() ? "/images/default_book.png" : imageUrl,
                                     new HashSet<>(), // authors
