@@ -109,7 +109,7 @@ class GeminiBookEnrichmentStrategyTest {
 
         // then
         // 원본과 동일한 객체인지 확인 (참조 혹은 값 비교)
-        assertThat(result).isEqualTo(original);
+        assertThat(result).isSameAs(original);
         assertThat(result.bookDescription()).isEqualTo("짧은 설명"); // 변경되지 않음
     }
 
