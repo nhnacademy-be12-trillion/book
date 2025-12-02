@@ -34,8 +34,8 @@ class GeminiBookEnrichmentStrategyTest {
     }
 
     @Test
-    @DisplayName("목차가 비어있거나 설명이 50자 이하인 경우 -> true")
-    void isApplicableTest(){
+    @DisplayName("목차가 비어있을 경우 -> true")
+    void isApplicable_whenIndexIsEmpty(){
         BookCreateRequest request = createRequestWith("", "정상적인 긴 설명입니다. 50자가 넘어가도록 길게 작성해야 AI가 보강을 안 하겠죠?");
         assertThat(strategy.isApplicable(request)).isTrue();
     }
