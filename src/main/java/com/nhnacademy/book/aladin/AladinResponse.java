@@ -2,6 +2,7 @@ package com.nhnacademy.book.aladin;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.print.DocFlavor;
 import java.util.List;
@@ -12,20 +13,20 @@ public record AladinResponse(
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Item(
-            String title,
-            String author,
-            String pubDate,
-            String description,
+            String title, //제목
+            String author, //작가
+            String pubDate, //출판일
+            String description, //설명
 
-            @JsonAlias("isbn13")
-            String isbn,
+            @JsonProperty("isbn13")
+            String isbn, //isbn
 
-            int priceStandard,
+            int priceStandard, //정가
             //int priceSales,
-            String cover,
-            String publisher,
+            String cover, //책 표지
+            String publisher, //출판사
 
-            SubInfo subInfo
+            SubInfo subInfo // 목차, 부제목, 제목 포함
     ){}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
