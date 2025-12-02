@@ -143,7 +143,7 @@ class GeminiBookEnrichmentStrategyTest {
         BookCreateRequest result = strategy.enrich(original);
 
         // then
-        assertThat(result).isEqualTo(original);
+        assertThat(result).isSameAs(original);
     }
 
     private BookCreateRequest createRequestWith(String index, String description) {
