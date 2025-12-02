@@ -95,7 +95,7 @@ public class BookParser {
                                     BookState.ON_SALE,
                                     100, // 재고
                                     prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue), // 정가
-                                    prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue), // 판매가 == 초기 정가랑 같음 지정 안해주면
+                                    prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue), //  판매가 == 초기 정가랑 같음 지정 안해주면
                                     0, // 리뷰 점수
                                     imageUrl.isEmpty() ? "/images/default_book.png" : imageUrl,
                                     new HashSet<>(), // authors
