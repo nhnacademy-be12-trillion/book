@@ -18,6 +18,8 @@
         }
         .book-cover {
             max-width: 200px;
+            max-height: 280px;
+            object-fit: cover;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
     </style>
@@ -52,8 +54,15 @@
                         <div class="row mb-3">
                             <div class="col-md-4 text-center">
                                 <img id="previewImage" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/150px-No-Image-Placeholder.svg.png" class="book-cover img-fluid rounded mb-2">
+
                                 <input type="hidden" id="bookImage">
+
+                                <div class="mt-2">
+                                    <label for="fileInput" class="form-label text-sm text-muted">직접 이미지 업로드 (선택)</label>
+                                    <input class="form-control form-control-sm" type="file" id="fileInput" accept="image/*" onchange="previewFile()">
+                                </div>
                             </div>
+
                             <div class="col-md-8">
                                 <div class="mb-3">
                                     <label class="form-label">ISBN</label>
@@ -114,10 +123,9 @@
 </div>
 
 <script>
-    // [중요] 사용 중인 서버 포트 확인 (기존 로그 기반 10413 설정 유지)
     const API_BASE_URL = 'http://localhost:10413/api/books';
 
-    // 1. ISBN으로 정보 조회 (GET)
+    // 1. AI 도서 검색
     async function fetchBookInfo() {
         const isbn = document.getElementById('isbnInput').value;
         if (!isbn) {
@@ -125,81 +133,124 @@
             return;
         }
 
-        document.getElementById('loading').style.display = 'flex'; // 로딩 시작
+        document.getElementById('loading').style.display = 'flex';
+        // 파일 입력 초기화
+        document.getElementById('fileInput').value = '';
 
         try {
             const response = await fetch(`${API_BASE_URL}/isbn/${isbn}`);
             if (!response.ok) throw new Error('도서 정보를 찾을 수 없습니다.');
 
             const data = await response.json();
-            fillForm(data); // 폼 채우기
+            fillForm(data);
         } catch (error) {
             alert(error.message);
             console.error(error);
         } finally {
-            document.getElementById('loading').style.display = 'none'; // 로딩 끝
+            document.getElementById('loading').style.display = 'none';
         }
     }
 
-    // 2. 받아온 데이터 폼에 채우기
+    // 2. 폼 데이터 채우기
     function fillForm(data) {
-        document.getElementById('isbn').value = data.isbn;
-        document.getElementById('bookName').value = data.bookName;
-        document.getElementById('bookPublisher').value = data.bookPublisher;
-        document.getElementById('bookPublicationDate').value = data.bookPublicationDate;
-        document.getElementById('bookRegularPrice').value = data.bookRegularPrice;
-        document.getElementById('bookSalePrice').value = data.bookSalePrice;
-        document.getElementById('bookDescription').value = data.bookDescription;
-        document.getElementById('bookIndex').value = data.bookIndex;
-        document.getElementById('bookImage').value = data.bookImage;
+        document.getElementById('isbn').value = data.isbn || '';
+        document.getElementById('bookName').value = data.bookName || '';
+        document.getElementById('bookPublisher').value = data.bookPublisher || '';
+        document.getElementById('bookPublicationDate').value = data.bookPublicationDate || '';
+        document.getElementById('bookRegularPrice').value = data.bookRegularPrice || 0;
+        document.getElementById('bookSalePrice').value = data.bookSalePrice || 0;
+        document.getElementById('bookDescription').value = data.bookDescription || '';
+        document.getElementById('bookIndex').value = data.bookIndex || '';
 
-        // 이미지가 있으면 그걸 쓰고, 없으면 기본 이미지
-        if (data.bookImage) {
-            document.getElementById('previewImage').src = data.bookImage;
+        // 이미지 URL 채우기
+        const imgUrl = data.bookImage || '';
+        document.getElementById('bookImage').value = imgUrl;
+
+        if (imgUrl) {
+            document.getElementById('previewImage').src = imgUrl;
+        } else {
+            document.getElementById('previewImage').src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/150px-No-Image-Placeholder.svg.png";
         }
     }
 
-    // 3. 최종 등록 요청 (POST)
+    // [추가] 수동 파일 선택 시 미리보기 변경
+    function previewFile() {
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('previewImage');
+        const file = fileInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                preview.src = reader.result;
+            }
+            reader.readAsDataURL(file);
+            // 수동 파일을 선택했으므로 AI URL은 비워줌 (충돌 방지)
+            document.getElementById('bookImage').value = '';
+        }
+    }
+
+    // 3. 도서 등록 요청 (CORS 해결 버전)
     async function registerBook() {
-        const formData = {
+        // (1) JSON 데이터 준비
+        const requestDto = {
             isbn: document.getElementById('isbn').value,
             bookName: document.getElementById('bookName').value,
             bookDescription: document.getElementById('bookDescription').value,
             bookPublisher: document.getElementById('bookPublisher').value,
             bookPublicationDate: document.getElementById('bookPublicationDate').value,
             bookIndex: document.getElementById('bookIndex').value,
-            bookPackaging: true, // 기본값
-
-            // [수정 핵심] Enum 타입 불일치 에러 해결 ("SELLING" -> "ON_SALE")
+            bookPackaging: true,
             bookState: "ON_SALE",
-
-            bookStock: parseInt(document.getElementById('bookStock').value),
-            bookRegularPrice: parseInt(document.getElementById('bookRegularPrice').value),
-            bookSalePrice: parseInt(document.getElementById('bookSalePrice').value),
+            bookStock: parseInt(document.getElementById('bookStock').value) || 0,
+            bookRegularPrice: parseInt(document.getElementById('bookRegularPrice').value) || 0,
+            bookSalePrice: parseInt(document.getElementById('bookSalePrice').value) || 0,
+            // 파일이 없으면 이 URL을 서버가 다운로드해서 사용함
             bookImage: document.getElementById('bookImage').value
         };
+
+        const formData = new FormData();
+
+        // (2) "book" 파트 (JSON)
+        const jsonBlob = new Blob([JSON.stringify(requestDto)], { type: "application/json" });
+        formData.append("book", jsonBlob);
+
+        // (3) "file" 파트 (이미지)
+        // [중요] 브라우저에서 fetch로 이미지를 다운받지 않음 (CORS 에러 원인 제거)
+        // 대신 사용자가 직접 올린 파일이 있을 때만 보냄.
+        const fileInput = document.getElementById('fileInput');
+
+        if (fileInput && fileInput.files.length > 0) {
+            // 사용자가 직접 파일을 선택한 경우 -> 파일 전송
+            formData.append("file", fileInput.files[0]);
+        }
+        // 사용자가 파일을 선택하지 않은 경우 ->
+        // formData에 "file"을 추가하지 않음.
+        // 백엔드 Controller가 required=false이므로 문제 없음.
+        // 백엔드 Service가 requestDto.bookImage를 보고 URL 다운로드를 수행함.
 
         try {
             const response = await fetch(API_BASE_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
+                body: formData
             });
 
             if (response.ok) {
-                alert('도서가 성공적으로 등록되었습니다!');
+                alert('🎉 도서가 성공적으로 등록되었습니다!');
                 location.reload();
             } else {
-                // 에러 메시지를 좀 더 자세히 보기 위해
                 const errorText = await response.text();
-                console.error("등록 실패:", errorText);
-                alert('등록 실패! (콘솔 로그 확인)');
+
+                if (errorText.includes("Duplicate")) {
+                    alert("⛔ 이미 등록된 ISBN입니다.");
+                } else {
+                    console.error("등록 실패:", errorText);
+                    alert('등록 실패! 콘솔 로그를 확인하세요.\n' + errorText);
+                }
             }
         } catch (error) {
             console.error('Network Error:', error);
-            alert('등록 중 네트워크 오류 발생');
+            alert('서버 통신 오류: ' + error.message);
         }
     }
 </script>

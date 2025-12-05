@@ -15,9 +15,7 @@ spring:
     show-sql: true
     properties:
       hibernate:
-
         dialect: org.hibernate.dialect.MySQL8Dialect
-
         jdbc:
           batch_size: 1000
           order_inserts: true
@@ -25,12 +23,17 @@ spring:
     config:
       enabled: false
 
+  # [추가됨] 파일 업로드 용량 제한 설정 (spring 하위로 이동)
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 eureka:
   client:
     enabled: false
 
-
-  ## 알라딘 API
+## 알라딘 API
 aladin:
   api:
     ttb-key: ${ALADIN_TTBKEY}
@@ -42,3 +45,12 @@ book:
 gemini:
   api:
     gemini-key: ${GEMINI_KEY}
+
+## MinIO 설정
+minio:
+  url: ${MINIO_URL}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket: "trillion-book"
+
+

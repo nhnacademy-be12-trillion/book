@@ -115,3 +115,22 @@ Content-Type: application/json
 {
   "quantity": 1
 }
+
+### 도서에 등록된 파일 조히
+GET {{host}}/api/files/1
+Accept: application/json
+
+###
+POST {{host}}/api/files/books/{{bookId}}/image
+Content-Type: application/json
+
+{
+  "imageUrl": "https://image.aladin.co.kr/product/33461/33/cover/K182938865_1.jpg"
+}
+
+###
+POST {{host}}/admin/refresh-images
+Content-Type: application/json
+
+###
+ DELETE http://localhost:10413/test/minio/bucket
