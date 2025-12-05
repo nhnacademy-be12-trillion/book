@@ -30,13 +30,10 @@ Content-Type: application/json
 ###
 // 도서 수정 (Update - PUT 매핑)
 // (할인율 10% 적용 테스트)
-PUT {{host}}/api/books/{{bookId}}
+PUT {{host}}/api/books/2
 Content-Type: application/json
 
 {
-  "bookPackaging": true,
-  "bookState": "ON_SALE",
-  "bookStock": 100,
   "discountRate": 10.0
 }
 
@@ -134,3 +131,6 @@ Content-Type: application/json
 
 ###
  DELETE http://localhost:10413/test/minio/bucket
+
+###
+POST {{host}}/api/admin/migration/price/fix
