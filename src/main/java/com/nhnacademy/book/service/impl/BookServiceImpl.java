@@ -53,9 +53,6 @@ public class BookServiceImpl implements BookService {
         Book book = new Book();
 
         String uploadUrl = null;
-        if(file != null && !file.isEmpty()) {
-            uploadUrl = minioService.uploadImage(file);
-        }
 
         if (file != null && !file.isEmpty()) {
             log.info("파일 업로드 감지: MinIO로 직접 업로드 시도");

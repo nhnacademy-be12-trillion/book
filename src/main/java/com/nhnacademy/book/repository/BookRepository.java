@@ -10,6 +10,15 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Book b SET b.bookRegularPrice = 10000 WHERE b.bookRegularPrice = 0")
+    int updateZeroRegularPricesToDefault();
+
+    // 판매가가 0원인 책들을 정가와 똑같이 설정
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Book b SET b.bookSalePrice = b.bookRegularPrice WHERE b.bookSalePrice = 0")
+    int updateZeroSalePricesToRegularPrice();
+
     @Query("SELECT b FROM Book b " +
             "WHERE (b.bookIndex IS NULL OR b.bookIndex = '')")
     List<Book> findAugmentationCandidates(String defaultImageUrl, Pageable pageable);

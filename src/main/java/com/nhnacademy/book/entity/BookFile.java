@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "File")
+@Table(name = "BookFile")
 public class BookFile {
 
     @Id

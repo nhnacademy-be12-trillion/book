@@ -23,4 +23,10 @@ public class MigrationController {
         migrationService.migrateAllImages();
         return ResponseEntity.ok("🚀 이미지 이관 작업이 시작되었습니다. (Book -> File 테이블 이동)");
     }
+    // 가격 데이터 보정 실행
+    @PostMapping("/price/fix")
+    public ResponseEntity<String> fixBookPrices() {
+        String result = migrationService.fixBookPrices();
+        return ResponseEntity.ok(result);
+    }
 }
