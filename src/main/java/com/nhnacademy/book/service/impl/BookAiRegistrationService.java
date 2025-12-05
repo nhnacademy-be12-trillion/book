@@ -1,4 +1,4 @@
-package com.nhnacademy.book.service;
+package com.nhnacademy.book.service.impl;
 
 import com.nhnacademy.book.dto.book.BookCreateRequest;
 import com.nhnacademy.book.service.strategy.BookEnrichStrategy;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class BookRegistrationService {
+public class BookAiRegistrationService {
     private final BookSearchStrategy bookSearchStrategy;
     private final BookEnrichStrategy bookEnrichStrategy;
 

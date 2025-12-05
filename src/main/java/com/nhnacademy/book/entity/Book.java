@@ -75,7 +75,7 @@ public class Book {
     // 리뷰 점수
     private double bookReviewRate;
 
-    // 책 이미지 -> 파일 테이블에 따로 빼기?
+    // 책 이미지 -> 파일 테이블에 따로 빼기? todo minio 제거 할 필드
     @CsvBindByName(column = "IMAGE_URL")
     private String bookImage;
 

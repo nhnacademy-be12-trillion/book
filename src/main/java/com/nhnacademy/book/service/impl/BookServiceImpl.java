@@ -8,18 +8,24 @@ import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.BookState;
 import com.nhnacademy.book.repository.BookRepository;
 import com.nhnacademy.book.service.BookService;
+import com.nhnacademy.book.service.FileService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
+    private final FileService fileService;
+    private final MinioService minioService;
 
     // 도서 목록 조회 구현 (BookListResponse 사용)
     @Override
@@ -42,9 +48,26 @@ public class BookServiceImpl implements BookService {
     // 도서 등록 구현 (BookCreateRequest 사용)
     @Override
     @Transactional // 쓰기 작업이므로 트랜잭션 필요
-    public Long createBook(BookCreateRequest request) {
+    public Long createBook(BookCreateRequest request, MultipartFile file) {
         // 1. DTO -> Entity 변환
         Book book = new Book();
+
+        String uploadUrl = null;
+        if(file != null && !file.isEmpty()) {
+            uploadUrl = minioService.uploadImage(file);
+        }
+
+        if (file != null && !file.isEmpty()) {
+            log.info("파일 업로드 감지: MinIO로 직접 업로드 시도");
+            uploadUrl = minioService.uploadImage(file);
+        }
+        // 상황 B: 파일은 없지만, 알라딘 이미지 URL이 있는 경우 -> 서버가 다운로드해서 업로드
+        else if (request.bookImage() != null && !request.bookImage().isBlank()) {
+            log.info("이미지 URL 감지: 서버에서 다운로드 및 업로드 시도 -> {}", request.bookImage());
+            // uploadFromUrl 메서드가 이미 MinioService에 구현되어 있음!
+            uploadUrl = minioService.uploadFromUrl(request.bookImage());
+        }
+
 
         // request 필드 매핑
         book.setIsbn(request.isbn());
@@ -62,8 +85,16 @@ public class BookServiceImpl implements BookService {
         // 누락된 필드 기본값 설정 (리뷰 점수는 등록 시 0.0)
         book.setBookReviewRate(0.0);
 
+        if(uploadUrl != null) {
+            book.setBookImage(uploadUrl);
+        }
+
         // DB 저장 및 ID 반환
         Book savedBook = bookRepository.save(book);
+        if(uploadUrl != null) {
+            fileService.saveBookImage(savedBook.getBookId(), uploadUrl);
+        }
+
         return savedBook.getBookId();
     }
 
