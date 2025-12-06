@@ -30,4 +30,6 @@ public interface BookService {
 
     // 도서 수량
     public void deductStock(Long bookId, int quantity);
+
+    int calculateSalePrice(int regularPrice, double discountRate);
 }

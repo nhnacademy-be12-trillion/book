@@ -78,6 +78,10 @@
                                         <input type="text" class="form-control" id="bookPublisher">
                                     </div>
                                     <div class="col">
+                                        <label class="form-label">작가</label>
+                                        <input type="text" class="form-control" id="bookAuthor" placeholder="여러 명일 경우 쉼표(,) 구분">
+                                    </div>
+                                    <div class="col">
                                         <label class="form-label">출판일</label>
                                         <input type="date" class="form-control" id="bookPublicationDate">
                                     </div>
@@ -156,6 +160,10 @@
         document.getElementById('isbn').value = data.isbn || '';
         document.getElementById('bookName').value = data.bookName || '';
         document.getElementById('bookPublisher').value = data.bookPublisher || '';
+
+        // [수정됨] 작가 정보 채우기
+        document.getElementById('bookAuthor').value = data.bookAuthor || '';
+
         document.getElementById('bookPublicationDate').value = data.bookPublicationDate || '';
         document.getElementById('bookRegularPrice').value = data.bookRegularPrice || 0;
         document.getElementById('bookSalePrice').value = data.bookSalePrice || 0;
@@ -198,6 +206,10 @@
             bookName: document.getElementById('bookName').value,
             bookDescription: document.getElementById('bookDescription').value,
             bookPublisher: document.getElementById('bookPublisher').value,
+
+            // [수정됨] 작가 정보 포함
+            bookAuthor: document.getElementById('bookAuthor').value,
+
             bookPublicationDate: document.getElementById('bookPublicationDate').value,
             bookIndex: document.getElementById('bookIndex').value,
             bookPackaging: true,
