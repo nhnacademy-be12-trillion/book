@@ -9,6 +9,7 @@ public record BookCreateRequest(
         String bookName,
         String bookDescription,
         String bookPublisher,
+        String bookAuthor,
         LocalDate bookPublicationDate,
         String bookIndex,
         boolean bookPackaging,

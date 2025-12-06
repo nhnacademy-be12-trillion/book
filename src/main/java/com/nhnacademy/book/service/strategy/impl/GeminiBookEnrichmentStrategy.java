@@ -109,7 +109,7 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
             return new BookCreateRequest(
                     original.isbn(), original.bookName(),
                     newDescription, // AI 설명 적용
-                    original.bookPublisher(), original.bookPublicationDate(),
+                    original.bookPublisher(), original.bookAuthor(), original.bookPublicationDate(),
                     newIndex,       // AI 목차 적용
                     original.bookPackaging(), original.bookState(), original.bookStock(),
                     original.bookRegularPrice(), original.bookSalePrice(), original.bookImage()

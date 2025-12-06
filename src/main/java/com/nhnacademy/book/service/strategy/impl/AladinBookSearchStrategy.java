@@ -3,6 +3,7 @@ package com.nhnacademy.book.service.strategy.impl;
 import com.nhnacademy.book.aladin.AladinResponse;
 import com.nhnacademy.book.dto.book.BookCreateRequest;
 import com.nhnacademy.book.entity.BookState;
+import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.strategy.BookSearchStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,9 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 public class AladinBookSearchStrategy implements BookSearchStrategy {
     private final RestTemplate restTemplate;
+    private static final double DEFAULT_DISCOUNT_RATE = 10.0;
+    private final BookService bookService;
+
 
     @Value("${aladin.api.ttb-key}") //키 만료 된듯.
     private String ttbKey;
@@ -65,11 +69,12 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
         String index = (item.subInfo() != null && item.subInfo().toc() != null) ? item.subInfo().toc() : "";
 
         int noDiscountRate = item.priceStandard();
+        int salePrice = bookService.calculateSalePrice(noDiscountRate, DEFAULT_DISCOUNT_RATE);
 
-        return new BookCreateRequest(
-                item.isbn(), item.title(), item.description(), item.publisher(),
+        return  new BookCreateRequest(
+                item.isbn(), item.title(), item.description(), item.publisher(),item.author(),
                 pubDate, index, true, BookState.ON_SALE, 0,
-                item.priceStandard(), noDiscountRate, item.cover()
+                item.priceStandard(), salePrice, item.cover()
         );
     }
 }

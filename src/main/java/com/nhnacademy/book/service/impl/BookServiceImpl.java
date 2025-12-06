@@ -4,9 +4,10 @@ import com.nhnacademy.book.dto.book.BookCreateRequest;
 import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
-import com.nhnacademy.book.entity.Book;
-import com.nhnacademy.book.entity.BookState;
+import com.nhnacademy.book.entity.*;
+import com.nhnacademy.book.repository.AuthorRepository;
 import com.nhnacademy.book.repository.BookRepository;
+import com.nhnacademy.book.repository.PublisherRepository;
 import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,6 +29,8 @@ public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
     private final FileService fileService;
     private final MinioService minioService;
+    private final AuthorRepository authorRepository;       // [추가] 작가 조회용
+    private final PublisherRepository publisherRepository; // [추가] 출판사 조회용
 
     // 도서 목록 조회 구현 (BookListResponse 사용)
     @Override
@@ -45,28 +50,23 @@ public class BookServiceImpl implements BookService {
         return BookDetailResponse.from(book);
     }
 
-    // 도서 등록 구현 (BookCreateRequest 사용)
     @Override
-    @Transactional // 쓰기 작업이므로 트랜잭션 필요
+    @Transactional
     public Long createBook(BookCreateRequest request, MultipartFile file) {
-        // 1. DTO -> Entity 변환
         Book book = new Book();
 
+        // 1. 이미지 업로드 처리
         String uploadUrl = null;
 
         if (file != null && !file.isEmpty()) {
             log.info("파일 업로드 감지: MinIO로 직접 업로드 시도");
             uploadUrl = minioService.uploadImage(file);
-        }
-        // 상황 B: 파일은 없지만, 알라딘 이미지 URL이 있는 경우 -> 서버가 다운로드해서 업로드
-        else if (request.bookImage() != null && !request.bookImage().isBlank()) {
+        } else if (request.bookImage() != null && !request.bookImage().isBlank()) {
             log.info("이미지 URL 감지: 서버에서 다운로드 및 업로드 시도 -> {}", request.bookImage());
-            // uploadFromUrl 메서드가 이미 MinioService에 구현되어 있음!
             uploadUrl = minioService.uploadFromUrl(request.bookImage());
         }
 
-
-        // request 필드 매핑
+        //도서 등록시 기본정보 매핑. -> 도서 엔티티 기반
         book.setIsbn(request.isbn());
         book.setBookName(request.bookName());
         book.setBookDescription(request.bookDescription());
@@ -77,21 +77,72 @@ public class BookServiceImpl implements BookService {
         book.setBookStock(request.bookStock());
         book.setBookRegularPrice(request.bookRegularPrice());
         book.setBookSalePrice(request.bookSalePrice());
-        book.setBookImage(request.bookImage());
-
-        // 누락된 필드 기본값 설정 (리뷰 점수는 등록 시 0.0)
         book.setBookReviewRate(0.0);
 
-        if(uploadUrl != null) {
+        //가져온 도서 이미지가 업로드가 성공했다면 minIO url을 실패시 기본 알라딘 이미지를 저장
+        if (uploadUrl != null) {
             book.setBookImage(uploadUrl);
+        } else {
+            book.setBookImage(request.bookImage());
         }
 
-        // DB 저장 및 ID 반환
+        //도서를 등록할때 가져온 출판사의 정보가 이미 Db에 있다면?
+        if (request.bookPublisher() != null && !request.bookPublisher().isBlank()) {
+            String publisherName = request.bookPublisher().trim();
+
+            //db에서 출판사 정보 조회
+            Optional<Publisher> existingPublisher = publisherRepository.findByPublisherName(publisherName);
+            Publisher publisher;
+
+            if (existingPublisher.isPresent()) {
+                log.info("기존 출판사 발견: '{}' -> ID: {}", publisherName, existingPublisher.get().getPublisherId());
+                publisher = existingPublisher.get();
+                //db에 존재하지 않는 출판사였다면? -> 새롭게 출판사 정보를 만들고 도서에 할당.
+            } else {
+                log.info("새로운 출판사 생성: '{}'", publisherName);
+                publisher = publisherRepository.save(new Publisher(publisherName));
+            }
+
+            book.setPublisher(publisher);
+        }
+
+        //작가 정보
+        String authorStr = request.bookAuthor();
+
+        //작가 정보가 이미 db에 있다면?
+        if (authorStr != null && !authorStr.isBlank()) {
+            String[] authorNames = authorStr.split(",");
+
+            for (String name : authorNames) {
+                String cleanName = name.replaceAll("\\(.*?\\)", "").trim();
+
+                if (!cleanName.isEmpty()) {
+                    // DB에서 조회
+                    Optional<Author> existingAuthor = authorRepository.findByAuthorName(cleanName);
+                    Author author;
+
+                    if (existingAuthor.isPresent()) {
+                        log.info(" 기존 작가 발견: '{}' -> ID: {}", cleanName, existingAuthor.get().getAuthorId());
+                        author = existingAuthor.get();
+                        //없는 경우 새로운 작가 정보를 Author테이블에 등록
+                    } else {
+                        log.info(" 새로운 작가 생성: '{}'", cleanName);
+                        author = authorRepository.save(new Author(cleanName));
+                    }
+                    BookAuthor bookAuthor = new BookAuthor(author, book);
+                    book.getBookAuthors().add(bookAuthor);
+                }
+            }
+        }
+
+        // 3. 최종 저장
         Book savedBook = bookRepository.save(book);
-        if(uploadUrl != null) {
+
+        if (uploadUrl != null) {
             fileService.saveBookImage(savedBook.getBookId(), uploadUrl);
         }
 
+        log.info("🎉 도서 등록 완료! ID: {}, 제목: {}", savedBook.getBookId(), savedBook.getBookName());
         return savedBook.getBookId();
     }
 
@@ -109,7 +160,7 @@ public class BookServiceImpl implements BookService {
         double discountRate = request.discountRate();
 
         // 판매가 계산: 정가 * (1 - 할인율/100)
-        int newSalePrice = (int) Math.round(regularPrice * (1 - discountRate / 100.0));
+        int newSalePrice = calculateSalePrice(regularPrice, discountRate);
 
         // 요청받은 값과 계산된 판매가로 Entity 필드 수정
         // (JPA의 변경 감지(Dirty Checking) 기능으로 자동 저장)
@@ -156,5 +207,11 @@ public class BookServiceImpl implements BookService {
 
         // 엔티티에게 "재고 깎아" 시키기 (상태 변경 로직은 엔티티 안에 있으니 알아서 됨)
         book.deductStock(quantity);
+    }
+
+    @Override
+    @Transactional
+    public int calculateSalePrice(int regularPrice, double discountRate) {
+        return (int) Math.round(regularPrice * (1 - discountRate / 100.0));
     }
 }
