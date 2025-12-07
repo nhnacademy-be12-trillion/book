@@ -152,6 +152,7 @@ class GeminiBookEnrichmentStrategyTest {
                 "테스트 책 제목",
                 description,
                 "테스트 출판사",
+                "테스트 작가",
                 LocalDate.now(),
                 index,
                 true,

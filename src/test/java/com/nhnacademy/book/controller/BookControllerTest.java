@@ -119,7 +119,7 @@ class BookControllerTest {
     void createBook() throws Exception {
         // given
         BookCreateRequest request = new BookCreateRequest(
-                "978-1234", "새 책", "설명", "출판사", LocalDate.now(), "목차",
+                "978-1234", "새 책", "설명", "출판사", "작가",LocalDate.now(), "목차",
                 true, BookState.ON_SALE, 100, 10000, 9000, "img.jpg"
         );
 
@@ -255,7 +255,7 @@ class BookControllerTest {
         // given
         String isbn = "9781234";
         BookCreateRequest request = new BookCreateRequest(
-                isbn, "AI 책", "AI 설명", "출판사", LocalDate.now(), "목차",
+                isbn, "AI 책", "AI 설명", "출판사","작가", LocalDate.now(), "목차",
                 true, BookState.ON_SALE, 100, 20000, 18000, "ai.jpg"
         );
 
