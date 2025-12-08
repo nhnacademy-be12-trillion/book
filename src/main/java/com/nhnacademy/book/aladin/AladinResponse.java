@@ -26,6 +26,8 @@ public record AladinResponse(
             String cover, //책 표지
             String publisher, //출판사
 
+            String categoryName,
+
             SubInfo subInfo // 목차, 부제목, 제목 포함
     ){}
 

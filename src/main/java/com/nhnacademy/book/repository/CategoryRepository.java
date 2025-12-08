@@ -9,4 +9,6 @@ import java.util.List;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT c.categoryName FROM Category c")
     List<String> findAllCategoryName();
+
+    List<Category> findTop10ByCategoryNameContaining(String keyword);
 }
