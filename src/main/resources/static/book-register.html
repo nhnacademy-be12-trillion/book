@@ -22,6 +22,13 @@
             object-fit: cover;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        /* 카테고리 검색 결과 리스트 스타일 */
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .cursor-pointer:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -72,18 +79,48 @@
                                     <label class="form-label">도서명</label>
                                     <input type="text" class="form-control fw-bold" id="bookName">
                                 </div>
-                                <div class="row">
+                                <div class="row mb-3">
                                     <div class="col">
                                         <label class="form-label">출판사</label>
                                         <input type="text" class="form-control" id="bookPublisher">
                                     </div>
                                     <div class="col">
                                         <label class="form-label">작가</label>
-                                        <input type="text" class="form-control" id="bookAuthor" placeholder="여러 명일 경우 쉼표(,) 구분">
+                                        <input type="text" class="form-control" id="bookAuthor" placeholder="여러 명은 쉼표(,) 구분">
                                     </div>
                                     <div class="col">
                                         <label class="form-label">출판일</label>
                                         <input type="date" class="form-control" id="bookPublicationDate">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-info"># 태그 (엔터로 추가)</label>
+
+                                    <input type="hidden" id="tags">
+
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="tagInput"
+                                               placeholder="태그 입력 후 엔터 (예: 베스트셀러)" autocomplete="off">
+                                    </div>
+
+                                    <div id="tagContainer" class="d-flex flex-wrap gap-2 mt-2">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">📂 카테고리 (다중 선택 가능)</label>
+
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="categorySearch"
+                                               placeholder="카테고리명 검색 후 클릭하여 추가 (예: 소설)" autocomplete="off">
+
+                                        <ul id="categoryResults" class="list-group position-absolute w-100"
+                                            style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                        </ul>
+                                    </div>
+
+                                    <div id="selectedCategoriesContainer" class="d-flex flex-wrap gap-2 mt-2">
                                     </div>
                                 </div>
                             </div>
@@ -95,7 +132,7 @@
                                 <input type="number" class="form-control" id="bookRegularPrice">
                             </div>
                             <div class="col">
-                                <label class="form-label">판매가</label>
+                                <label class="form-label">판매가 (할인 적용)</label>
                                 <input type="number" class="form-control" id="bookSalePrice">
                             </div>
                             <div class="col">
@@ -128,8 +165,11 @@
 
 <script>
     const API_BASE_URL = 'http://localhost:10413/api/books';
+    const CATEGORY_API_URL = 'http://localhost:10413/api/categories';
 
+    // ==========================================
     // 1. AI 도서 검색
+    // ==========================================
     async function fetchBookInfo() {
         const isbn = document.getElementById('isbnInput').value;
         if (!isbn) {
@@ -138,7 +178,6 @@
         }
 
         document.getElementById('loading').style.display = 'flex';
-        // 파일 입력 초기화
         document.getElementById('fileInput').value = '';
 
         try {
@@ -160,8 +199,6 @@
         document.getElementById('isbn').value = data.isbn || '';
         document.getElementById('bookName').value = data.bookName || '';
         document.getElementById('bookPublisher').value = data.bookPublisher || '';
-
-        // [수정됨] 작가 정보 채우기
         document.getElementById('bookAuthor').value = data.bookAuthor || '';
 
         document.getElementById('bookPublicationDate').value = data.bookPublicationDate || '';
@@ -170,10 +207,19 @@
         document.getElementById('bookDescription').value = data.bookDescription || '';
         document.getElementById('bookIndex').value = data.bookIndex || '';
 
-        // 이미지 URL 채우기
+        // [수정됨] 태그 채우기 (콤마 문자열 -> 배지 생성)
+        tagList = []; // 태그 리스트 초기화
+        document.getElementById('tagContainer').innerHTML = ''; // 배지 UI 초기화
+        document.getElementById('tags').value = ''; // 히든 값 초기화
+
+        if (data.tags) {
+            // "소설,베스트셀러" -> 각각 추가
+            data.tags.split(',').forEach(t => addTag(t.trim()));
+        }
+
+        // 이미지 처리
         const imgUrl = data.bookImage || '';
         document.getElementById('bookImage').value = imgUrl;
-
         if (imgUrl) {
             document.getElementById('previewImage').src = imgUrl;
         } else {
@@ -181,7 +227,7 @@
         }
     }
 
-    // [추가] 수동 파일 선택 시 미리보기 변경
+    // 3. 파일 미리보기
     function previewFile() {
         const fileInput = document.getElementById('fileInput');
         const preview = document.getElementById('previewImage');
@@ -193,22 +239,187 @@
                 preview.src = reader.result;
             }
             reader.readAsDataURL(file);
-            // 수동 파일을 선택했으므로 AI URL은 비워줌 (충돌 방지)
             document.getElementById('bookImage').value = '';
         }
     }
 
-    // 3. 도서 등록 요청 (CORS 해결 버전)
+    // ==========================================
+    // 4. 태그 관리 기능 (Tag Input) - [신규]
+    // ==========================================
+    const tagInput = document.getElementById('tagInput');
+    const tagContainer = document.getElementById('tagContainer');
+    const tagsHiddenInput = document.getElementById('tags');
+
+    let tagList = []; // 태그들을 담을 배열
+
+    // 태그 입력창에서 엔터 키 감지
+    tagInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // 폼 제출 방지
+            const text = this.value.trim();
+            addTag(text);
+        }
+    });
+
+    // 태그 추가 함수
+    function addTag(text) {
+        if (!text) return;
+        // 콤마가 포함되어 있다면 쪼개서 넣기 (알라딘에서 온 데이터 처리용)
+        if (text.includes(',')) {
+            text.split(',').forEach(t => addTag(t.trim()));
+            return;
+        }
+
+        // 중복 방지
+        if (tagList.includes(text)) {
+            tagInput.value = '';
+            return;
+        }
+
+        tagList.push(text);
+        renderTags();
+        tagInput.value = '';
+        updateHiddenTagInput();
+    }
+
+    // 태그 삭제 함수
+    function removeTag(text) {
+        tagList = tagList.filter(t => t !== text);
+        renderTags();
+        updateHiddenTagInput();
+    }
+
+    // 화면 그리기
+    function renderTags() {
+        tagContainer.innerHTML = '';
+        tagList.forEach(tag => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-info text-dark fs-6 p-2 d-flex align-items-center';
+            badge.innerHTML = `
+                #${tag}
+                <button type="button" class="btn-close ms-2" style="width: 0.5em; height: 0.5em;"
+                        onclick="removeTag('${tag}')"></button>
+            `;
+            tagContainer.appendChild(badge);
+        });
+    }
+
+    // 배열을 콤마 문자열로 변환하여 hidden input에 저장 (서버 전송용)
+    function updateHiddenTagInput() {
+        tagsHiddenInput.value = tagList.join(',');
+    }
+
+
+    // ==========================================
+    // 5. 카테고리 다중 선택 기능 (핵심 로직)
+    // ==========================================
+    const categorySearchInput = document.getElementById('categorySearch');
+    const categoryResults = document.getElementById('categoryResults');
+    const selectedCategoriesContainer = document.getElementById('selectedCategoriesContainer');
+
+    // 선택된 카테고리를 저장할 배열
+    let selectedCategories = [];
+
+    // 검색어 입력 이벤트
+    categorySearchInput.addEventListener('keyup', async function() {
+        const keyword = this.value.trim();
+
+        if (keyword.length < 1) {
+            categoryResults.style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${CATEGORY_API_URL}/search?keyword=${encodeURIComponent(keyword)}`);
+            if (response.ok) {
+                const categories = await response.json();
+                renderCategoryResults(categories);
+            }
+        } catch (error) {
+            console.error("카테고리 검색 에러", error);
+        }
+    });
+
+    // 검색 결과 렌더링
+    function renderCategoryResults(categories) {
+        categoryResults.innerHTML = '';
+        if (categories.length === 0) {
+            categoryResults.style.display = 'none';
+            return;
+        }
+
+        categories.forEach(cat => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item list-group-item-action cursor-pointer';
+            li.textContent = cat.categoryName;
+            li.onclick = () => addCategory(cat); // 클릭 시 추가
+            categoryResults.appendChild(li);
+        });
+        categoryResults.style.display = 'block';
+    }
+
+    // 카테고리 추가
+    function addCategory(category) {
+        // 중복 체크
+        if (selectedCategories.some(c => c.categoryId === category.categoryId)) {
+            alert("이미 추가된 카테고리입니다.");
+            categorySearchInput.value = '';
+            categoryResults.style.display = 'none';
+            return;
+        }
+
+        // 배열에 추가
+        selectedCategories.push(category);
+        renderSelectedBadges();
+
+        // 입력창 초기화
+        categorySearchInput.value = '';
+        categoryResults.style.display = 'none';
+    }
+
+    // 카테고리 삭제
+    function removeCategory(categoryId) {
+        selectedCategories = selectedCategories.filter(c => c.categoryId !== categoryId);
+        renderSelectedBadges();
+    }
+
+    // 선택된 카테고리 배지 그리기
+    function renderSelectedBadges() {
+        selectedCategoriesContainer.innerHTML = '';
+
+        selectedCategories.forEach(cat => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary fs-6 p-2 d-flex align-items-center';
+            badge.innerHTML = `
+                ${cat.categoryName}
+                <button type="button" class="btn-close btn-close-white ms-2"
+                        style="width: 0.5em; height: 0.5em;"
+                        onclick="removeCategory(${cat.categoryId})">
+                </button>
+            `;
+            selectedCategoriesContainer.appendChild(badge);
+        });
+    }
+
+    // ==========================================
+    // 6. 도서 등록 요청
+    // ==========================================
     async function registerBook() {
-        // (1) JSON 데이터 준비
+        // 선택된 카테고리 ID 리스트 추출
+        const categoryIdList = selectedCategories.map(c => c.categoryId);
+
         const requestDto = {
             isbn: document.getElementById('isbn').value,
             bookName: document.getElementById('bookName').value,
             bookDescription: document.getElementById('bookDescription').value,
             bookPublisher: document.getElementById('bookPublisher').value,
-
-            // [수정됨] 작가 정보 포함
             bookAuthor: document.getElementById('bookAuthor').value,
+
+            // [수정] 태그: hidden input의 값을 전송 (콤마 문자열)
+            tags: document.getElementById('tags').value,
+
+            // [수정] 다중 카테고리 리스트 전송
+            categoryIdList: categoryIdList,
 
             bookPublicationDate: document.getElementById('bookPublicationDate').value,
             bookIndex: document.getElementById('bookIndex').value,
@@ -217,29 +428,17 @@
             bookStock: parseInt(document.getElementById('bookStock').value) || 0,
             bookRegularPrice: parseInt(document.getElementById('bookRegularPrice').value) || 0,
             bookSalePrice: parseInt(document.getElementById('bookSalePrice').value) || 0,
-            // 파일이 없으면 이 URL을 서버가 다운로드해서 사용함
             bookImage: document.getElementById('bookImage').value
         };
 
         const formData = new FormData();
-
-        // (2) "book" 파트 (JSON)
         const jsonBlob = new Blob([JSON.stringify(requestDto)], { type: "application/json" });
         formData.append("book", jsonBlob);
 
-        // (3) "file" 파트 (이미지)
-        // [중요] 브라우저에서 fetch로 이미지를 다운받지 않음 (CORS 에러 원인 제거)
-        // 대신 사용자가 직접 올린 파일이 있을 때만 보냄.
         const fileInput = document.getElementById('fileInput');
-
         if (fileInput && fileInput.files.length > 0) {
-            // 사용자가 직접 파일을 선택한 경우 -> 파일 전송
             formData.append("file", fileInput.files[0]);
         }
-        // 사용자가 파일을 선택하지 않은 경우 ->
-        // formData에 "file"을 추가하지 않음.
-        // 백엔드 Controller가 required=false이므로 문제 없음.
-        // 백엔드 Service가 requestDto.bookImage를 보고 URL 다운로드를 수행함.
 
         try {
             const response = await fetch(API_BASE_URL, {
@@ -252,16 +451,14 @@
                 location.reload();
             } else {
                 const errorText = await response.text();
-
                 if (errorText.includes("Duplicate")) {
                     alert("⛔ 이미 등록된 ISBN입니다.");
                 } else {
                     console.error("등록 실패:", errorText);
-                    alert('등록 실패! 콘솔 로그를 확인하세요.\n' + errorText);
+                    alert('등록 실패!\n' + errorText);
                 }
             }
         } catch (error) {
-            console.error('Network Error:', error);
             alert('서버 통신 오류: ' + error.message);
         }
     }

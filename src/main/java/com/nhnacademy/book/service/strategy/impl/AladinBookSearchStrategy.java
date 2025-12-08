@@ -71,9 +71,25 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
         int noDiscountRate = item.priceStandard();
         int salePrice = bookService.calculateSalePrice(noDiscountRate, DEFAULT_DISCOUNT_RATE);
 
-        return  new BookCreateRequest(
+        StringBuilder tagBuilder = new StringBuilder();
+
+        if (item.categoryName() != null && !item.categoryName().isBlank()) {
+            String[] parts = item.categoryName().split(">");
+            for (String part : parts) {
+                String tag = part.trim();
+                // "국내도서", "외국도서" 같은 너무 뻔한 대분류는 태그에서 뺄 수도 있음
+                if (!tag.isEmpty() && !tag.equals("국내도서") && !tag.equals("외국도서")) {
+                    if (tagBuilder.length() > 0) {
+                        tagBuilder.append(","); // 콤마로 구분
+                    }
+                    tagBuilder.append(tag);
+                }
+            }
+        }
+        String extractedTags = tagBuilder.toString();
+        return new BookCreateRequest(
                 item.isbn(), item.title(), item.description(), item.publisher(),item.author(),
-                pubDate, index, true, BookState.ON_SALE, 0,
+                extractedTags, null,pubDate, index, true, BookState.ON_SALE, 0,
                 item.priceStandard(), salePrice, item.cover()
         );
     }

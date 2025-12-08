@@ -5,9 +5,7 @@ import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import com.nhnacademy.book.entity.*;
-import com.nhnacademy.book.repository.AuthorRepository;
-import com.nhnacademy.book.repository.BookRepository;
-import com.nhnacademy.book.repository.PublisherRepository;
+import com.nhnacademy.book.repository.*;
 import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +29,8 @@ public class BookServiceImpl implements BookService {
     private final MinioService minioService;
     private final AuthorRepository authorRepository;       // [추가] 작가 조회용
     private final PublisherRepository publisherRepository; // [추가] 출판사 조회용
+    private final TagRepository tagRepository;
+    private final CategoryRepository categoryRepository;
 
     // 도서 목록 조회 구현 (BookListResponse 사용)
     @Override
@@ -133,6 +133,34 @@ public class BookServiceImpl implements BookService {
                     book.getBookAuthors().add(bookAuthor);
                 }
             }
+            String tagStr = request.tags();
+            if (tagStr != null && !tagStr.isBlank()) {
+                String[] tagNames = tagStr.split(",");
+                for (String name : tagNames) {
+                    String cleanTagName = name.trim();
+                    if (!cleanTagName.isEmpty()) {
+                        Tag tag = tagRepository.findByTagName(cleanTagName)
+                                .orElseGet(() -> {
+                                    log.info("새로운 태그 생성: '{}'", cleanTagName);
+                                    return tagRepository.save(new Tag(cleanTagName));
+                                });
+
+                        // BookTag 연결
+                        book.getBookTags().add(new BookTag(tag, book));
+                    }
+                }
+            }
+            if (request.categoryIdList() != null && !request.categoryIdList().isEmpty()) {
+                for (Long catId : request.categoryIdList()) {
+                    Category category = categoryRepository.findById(catId)
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리 ID: " + catId));
+
+                    // 카테고리 하나당 BookCategory 하나씩 생성해서 추가
+                    BookCategory bookCategory = new BookCategory(category, book);
+                    book.getBookCategories().add(bookCategory);
+                }
+            }
+
         }
 
         // 3. 최종 저장
