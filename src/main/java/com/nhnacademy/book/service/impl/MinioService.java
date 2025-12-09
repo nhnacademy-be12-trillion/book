@@ -27,7 +27,7 @@ public class MinioService {
     @Value("${minio.url}")
     private String minioUrl;
 
-    // [1] 프론트 파일 업로드용 (그대로 유지)
+    // 프론트 파일 업로드용
     public String uploadImage(MultipartFile file) {
         if (file == null || file.isEmpty()) return null;
         try {
@@ -59,7 +59,7 @@ public class MinioService {
         }
     }
 
-    // [2] URL 이미지 다운로드 및 업로드 (수정됨: 메모리 버퍼링 방식)
+    // URL 이미지 다운로드 및 업로드
     public String uploadFromUrl(String imageUrl) {
         try {
             // --- 1단계: 알라딘에서 이미지 다운로드 (메모리에 저장) ---
@@ -79,11 +79,11 @@ public class MinioService {
                 return null;
             }
 
-            // 이미지를 byte 배열로 한 번에 읽어옵니다. (핵심 변경 사항)
+            // 이미지를 byte 배열로 한 번에 읽어옴
             byte[] imageBytes;
             String contentType;
             try (InputStream is = conn.getInputStream()) {
-                imageBytes = is.readAllBytes(); // Java 9 이상 메서드
+                imageBytes = is.readAllBytes();
                 contentType = conn.getContentType();
             }
 
@@ -103,7 +103,7 @@ public class MinioService {
                             .build()
             );
 
-            log.info("✅ MinIO 업로드 성공: {}", fileName);
+            log.info(" MinIO 업로드 성공: {}", fileName);
 
             String baseUrl = minioUrl.endsWith("/") ? minioUrl : minioUrl + "/";
             return baseUrl + bucketName + "/" + fileName;

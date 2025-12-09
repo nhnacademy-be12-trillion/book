@@ -1,6 +1,8 @@
 package com.nhnacademy.book.repository;
 
 import com.nhnacademy.book.entity.Book;
+import com.nhnacademy.book.entity.FileType;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -31,5 +33,11 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     // List<Book> findByBookImageStartingWith(String prefix);
 
     // 이미지가 아직 남아있는(NULL이 아닌) 책들만 조회 -> 마이그레이션 대상
-    List<Book> findByBookImageIsNotNull();
+//    List<Book> findByBookImageIsNotNull();
+
+    @Query("SELECT b, f.fileUrl " +
+            "FROM Book b " +
+            "LEFT JOIN FETCH b.publisher " +   // [1] 출판사: 매핑되어 있으니 'FETCH'로 성능 최적화 (N+1 방지)
+            "LEFT JOIN BookFile f ON b.bookId = f.joinedId AND f.fileType = :fileType") // [2] 이미지: 매핑 없으니 직접 'ON'으로 조인
+    Page<Object[]> findAllBooksWithImage(Pageable pageable, @Param("fileType") FileType fileType);
 }

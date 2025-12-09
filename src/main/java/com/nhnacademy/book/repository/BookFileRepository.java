@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface FileRepository extends JpaRepository<BookFile, Long> {
+public interface BookFileRepository extends JpaRepository<BookFile, Long> {
     //도서 1개의 이미지
-    Optional<BookFile> findFirstByFileTypeAndJoinedId(FileType fileType, Long fileId);
+    Optional<BookFile> findFirstByFileTypeAndJoinedId(FileType fileType, Long joinedId);
 }

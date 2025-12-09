@@ -52,12 +52,12 @@ public class BookIndexServiceImpl implements BookIndexService {
 
                 // 목차 데이터가 유효하다면 DB 업데이트
                 if (toc != null && !toc.isBlank()) {
-                    book.setBookIndex(toc);
+                    book.updateBookIndex(toc);
                     updatedCount++;
                 }
                 // 목차가 빈 값으로 온 경우 (API는 성공했으나 내용이 없음)
                 else {
-                    book.setBookIndex("목차 정보 없음");
+                    book.updateBookIndex("목차 정보 없음");
                     log.info("ISBN {} : 알라딘에 목차가 존재하지 않아 '목차 정보 없음'으로 처리", book.getIsbn());
                 }
 
@@ -68,7 +68,7 @@ public class BookIndexServiceImpl implements BookIndexService {
             }
         }
 
-        // [수정] pageable.unpaged() 일 때 getPageNumber() 호출 시 에러 방지
+        // pageable.unpaged() 일 때 getPageNumber() 호출 시 에러 방지
         int pageNumber = pageable.isPaged() ? pageable.getPageNumber() : 0;
         log.info("페이지 {} 처리 완료. 총 {}건 목차 업데이트.", pageNumber, updatedCount);
 
@@ -85,7 +85,7 @@ public class BookIndexServiceImpl implements BookIndexService {
         }
     }
 
-    // [수정] 예외를 내부에서 먹지 않고 밖으로 던짐 (throws Exception)
+    // 예외를 내부에서 먹지 않고 밖으로 던짐 (throws Exception)
     private String fetchTableOfContents(String isbn) throws Exception {
         String url = UriComponentsBuilder.fromUriString(aladinApiUrl)
                 .queryParam("ttbkey", ttbKey)
@@ -125,7 +125,7 @@ public class BookIndexServiceImpl implements BookIndexService {
         // 유니코드 공백(\u00A0) 제거
         cleaned = cleaned.replace("\u00A0", " ");
 
-        // [추가] HTML 엔티티 공백(&nbsp;) 제거 -> 이게 없어서 테스트 실패했음
+        // HTML 엔티티 공백(&nbsp;) 제거
         cleaned = cleaned.replace("&nbsp;", " ");
 
         // 연속된 줄바꿈을 하나로 압축
