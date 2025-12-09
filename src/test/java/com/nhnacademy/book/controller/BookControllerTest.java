@@ -27,6 +27,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -62,7 +65,7 @@ class BookControllerTest {
     void getBooks() throws Exception {
         // given
         BookListResponse response = new BookListResponse(
-                "테스트 책", "출판사", true, BookState.ON_SALE,
+                1L, "테스트 책","작가", "출판사", BookState.ON_SALE,
                 100, 10000, 9000, 4.5, "이미지"
         );
         Page<BookListResponse> page = new PageImpl<>(List.of(response));
@@ -86,16 +89,20 @@ class BookControllerTest {
         Long bookId = 1L;
 
         BookDetailResponse response = new BookDetailResponse(
-                "상세 책",             // bookName
-                "설명",                // bookDescription
-                "출판사",              // bookPublisher
+                bookId,
+                "12345678",
+                "책이름",       // bookName
+                "자까",
+                "설명",    // bookDescription
+                "출판사",                // bookPublisher
                 LocalDate.now(),       // bookPublicationDate
-                "목차",                // bookIndex
+                "목차",                 // bookIndex
                 true,                  // bookPackaging
                 BookState.ON_SALE,     // bookState
                 100,                   // bookStock
                 10000,                 // bookRegularPrice
                 9000,                  // bookSalePrice
+                10,
                 4.5,                   // bookReviewRate
                 "img.jpg",             // bookImage
                 0                      // viewCount
@@ -118,8 +125,10 @@ class BookControllerTest {
     @DisplayName("도서 등록 (POST /api/books) - MultipartFile 전송 테스트")
     void createBook() throws Exception {
         // given
+
+        List<Long> categoryIdList = new ArrayList<>();
         BookCreateRequest request = new BookCreateRequest(
-                "978-1234", "새 책", "설명", "출판사", "작가",LocalDate.now(), "목차",
+                "978-1234", "새 책", "설명", "출판사", "작가", "태그", categoryIdList, LocalDate.now(), "목차",
                 true, BookState.ON_SALE, 100, 10000, 9000, "img.jpg"
         );
 
@@ -253,9 +262,10 @@ class BookControllerTest {
     @DisplayName("AI 도서정보 가져오기 (GET /api/books/isbn/{isbn})")
     void getBookInfoByIsbn() throws Exception {
         // given
+        List<Long> categoryIdList = new ArrayList<>();
         String isbn = "9781234";
         BookCreateRequest request = new BookCreateRequest(
-                isbn, "AI 책", "AI 설명", "출판사","작가", LocalDate.now(), "목차",
+                isbn, "AI 책", "AI 설명", "출판사","작가", "태그", categoryIdList, LocalDate.now(), "목차",
                 true, BookState.ON_SALE, 100, 20000, 18000, "ai.jpg"
         );
 
