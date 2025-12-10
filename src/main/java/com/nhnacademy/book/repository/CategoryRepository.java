@@ -11,4 +11,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<String> findAllCategoryName();
 
     List<Category> findTop10ByCategoryNameContaining(String keyword);
+
+    List<Category> findAllByParentIsNull();
 }

@@ -15,7 +15,11 @@ spring:
     show-sql: true
     properties:
       hibernate:
+        default_batch_fetch_size: 1000
+
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+        # [기존 설정] Insert/Update 성능 최적화 (쓰기)
         jdbc:
           batch_size: 1000
           order_inserts: true
@@ -52,5 +56,3 @@ minio:
   access-key: ${MINIO_ACCESS_KEY}
   secret-key: ${MINIO_SECRET_KEY}
   bucket: "trillion-book"
-
-
