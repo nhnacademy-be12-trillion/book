@@ -1,5 +1,6 @@
 package com.nhnacademy.book.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.nhnacademy.book.exception.NotFoundBookIndexException;
 import com.nhnacademy.book.parser.CustomDateConverter;
 import com.nhnacademy.book.parser.CustomPriceConverter;
@@ -7,6 +8,7 @@ import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvCustomBindByName;
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.builder.ToStringExclude;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -61,12 +63,18 @@ public class Book {
     // private String bookImage;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToStringExclude
+    @JsonBackReference
     private Set<BookAuthor> bookAuthors = new HashSet<>();
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToStringExclude
+    @JsonBackReference
     private Set<BookCategory> bookCategories = new HashSet<>();
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToStringExclude
+    @JsonBackReference
     private Set<BookTag> bookTags = new HashSet<>();
 
     @Setter

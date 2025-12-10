@@ -53,7 +53,7 @@ public class BookServiceImpl implements BookService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 도서가 존재하지 않습니다. ID: " + bookId));
 
-        String imageUrl = fileRepository.findFirstByFileTypeAndJoinedId(FileType.BOOK, bookId)
+        String imageUrl = fileRepository.findFirstByJoinedIdAndFileType(bookId,FileType.BOOK)
                 .map(BookFile::getFileUrl)
                 .orElse(null);
 
@@ -141,7 +141,7 @@ public class BookServiceImpl implements BookService {
 
         // 이미지 수정 (BookFile 업데이트)
         if (request.bookImage() != null && !request.bookImage().isBlank()) {
-            Optional<BookFile> existingFile = fileRepository.findFirstByFileTypeAndJoinedId(FileType.BOOK, bookId);
+            Optional<BookFile> existingFile = fileRepository.findFirstByJoinedIdAndFileType(bookId,FileType.BOOK);
             if (existingFile.isPresent()) {
                 existingFile.get().setFileUrl(request.bookImage());
             } else {
