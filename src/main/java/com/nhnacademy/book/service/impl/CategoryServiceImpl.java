@@ -1,5 +1,6 @@
 package com.nhnacademy.book.service.impl;
 
+import com.nhnacademy.book.dto.category.CategorySearchResponse;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.entity.Category;
 import com.nhnacademy.book.repository.CategoryRepository;
@@ -7,7 +8,9 @@ import com.nhnacademy.book.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -17,11 +20,27 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<CategoryTreeResponse> getCategoryTree() {
         List<Category> categoryList = categoryRepository.findAllByParentIsNull();
 
         return categoryList.stream()
                 .map(this::toTreeDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategorySearchResponse> searchCategories(String keyword) {
+
+        if (keyword == null || keyword.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        return categoryRepository.findTop10ByCategoryNameContaining(keyword)
+                .stream()
+                // Entity -> SearchDTO 변환
+                .map(c -> new CategorySearchResponse(c.getCategoryId(), c.getCategoryName()))
                 .toList();
     }
 
