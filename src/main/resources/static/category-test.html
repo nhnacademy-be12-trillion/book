@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>카테고리 테스트 (Port: 10413)</title>
+  <style>
+    body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; display: flex; gap: 30px; background-color: #f9f9f9; }
+    .box { border: 1px solid #ddd; padding: 20px; width: 45%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background-color: #fff; }
+    h3 { border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-top: 0; color: #333; }
+
+    /* 트리 스타일 */
+    ul { list-style-type: none; padding-left: 20px; }
+    .caret { cursor: pointer; user-select: none; font-weight: bold; color: #333; }
+    .caret:hover { color: #4CAF50; }
+    .caret::before { content: "▶"; color: #4CAF50; display: inline-block; margin-right: 6px; font-size: 12px; transition: transform 0.2s; }
+    .caret-down::before { transform: rotate(90deg); }
+    .nested { display: none; margin-top: 5px;}
+    .active { display: block; }
+    .leaf { color: #666; margin-left: 18px; font-size: 0.95em; }
+
+    /* 검색 스타일 */
+    input { width: 100%; padding: 12px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+    .search-item { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+    .search-item:last-child { border-bottom: none; }
+    button { background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h3>📂 전체 카테고리 트리</h3>
+  <button onclick="loadTree()">데이터 새로고침</button>
+  <div id="tree-root" style="margin-top: 15px;">로딩 대기중...</div>
+</div>
+
+<div class="box">
+  <h3>🔍 카테고리 검색</h3>
+  <input type="text" id="searchInput" placeholder="검색어 입력 (예: 소설, 자바)" onkeyup="search()">
+  <div id="search-results"></div>
+</div>
+
+<script>
+  // ⭐ 포트 번호 10413 적용
+  const API_BASE = 'http://localhost:10413/api/categories';
+
+  // 1. 트리 데이터 로딩
+  async function loadTree() {
+    const root = document.getElementById('tree-root');
+    root.innerHTML = '데이터 조회중...';
+
+    try {
+      const res = await fetch(API_BASE);
+      if (!res.ok) throw new Error(`HTTP 에러! 상태: ${res.status}`);
+      const data = await res.json();
+
+      root.innerHTML = '';
+      if (data.length === 0) {
+        root.innerHTML = '데이터가 없습니다.';
+      } else {
+        root.appendChild(createTree(data));
+      }
+    } catch (e) {
+      root.innerHTML = `<span style="color:red">⚠️ 연결 실패: ${e.message}<br>1. 서버가 10413 포트에서 실행 중인가요?<br>2. Controller에 @CrossOrigin이 설정되어 있나요?</span>`;
+    }
+  }
+
+  // 재귀적으로 트리 생성 UI
+  function createTree(nodes) {
+    const ul = document.createElement('ul');
+    nodes.forEach(node => {
+      const li = document.createElement('li');
+
+      if (node.children && node.children.length > 0) {
+        const span = document.createElement('span');
+        span.className = 'caret';
+        span.innerText = node.categoryName;
+        span.onclick = function() {
+          this.parentElement.querySelector('.nested').classList.toggle('active');
+          this.classList.toggle('caret-down');
+        };
+        li.appendChild(span);
+
+        const childrenUl = createTree(node.children);
+        childrenUl.className = 'nested';
+        li.appendChild(childrenUl);
+      } else {
+        const span = document.createElement('span');
+        span.className = 'leaf';
+        span.innerText = node.categoryName;
+        li.appendChild(span);
+      }
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  // 2. 검색 로직
+  async function search() {
+    const keyword = document.getElementById('searchInput').value;
+    const resultBox = document.getElementById('search-results');
+
+    if (keyword.length < 1) {
+      resultBox.innerHTML = '';
+      return;
+    }
+
+    try {
+      // ⭐ 검색 API 호출
+      const res = await fetch(`${API_BASE}/search?keyword=${keyword}`);
+      const data = await res.json();
+
+      resultBox.innerHTML = '';
+      if (data.length === 0) {
+        resultBox.innerHTML = '<div style="color:#999; padding:5px;">검색 결과 없음</div>';
+        return;
+      }
+
+      data.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'search-item';
+        div.innerText = `[ID: ${item.categoryId}] ${item.categoryName}`;
+        resultBox.appendChild(div);
+      });
+    } catch (e) {
+      console.error("검색 실패:", e);
+    }
+  }
+
+  // 초기 로딩
+  loadTree();
+</script>
+</body>
+</html>
