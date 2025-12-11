@@ -58,6 +58,10 @@ public class Book {
     @Setter
     private double bookReviewRate;
 
+    @Lob
+    @Setter
+    private String bookReviewSummary;
+
     // [변경] 이미지 컬럼 제거 (BookFile 테이블로 이관)
     // @CsvBindByName(column = "IMAGE_URL")
     // private String bookImage;
