@@ -6,6 +6,7 @@ import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface BookService {
 
@@ -16,7 +17,7 @@ public interface BookService {
     BookDetailResponse getBook(Long bookId);
 
     // 도서 등록 (Create Request DTO 사용)
-    Long createBook(BookCreateRequest request);
+    Long createBook(BookCreateRequest request, MultipartFile file);
 
     // 도서 정보 수정 (Update Request DTO 사용)
     void updateBook(Long bookId, BookUpdateRequest request);
@@ -26,4 +27,9 @@ public interface BookService {
 
     // 도서 조회수
     void increaseViewCount(Long bookId);
+
+    // 도서 수량
+    public void deductStock(Long bookId, int quantity);
+
+    int calculateSalePrice(int regularPrice, double discountRate);
 }

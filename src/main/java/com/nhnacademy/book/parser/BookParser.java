@@ -84,26 +84,20 @@ public class BookParser {
 
                         try {
                             // Book 객체 생성
-                            Book book = new Book(
-                                    null, // ID는 자동 생성
-                                    isbnThirteenNo,
-                                    titleNm,
-                                    bookIntrcnCn,
-                                    (LocalDate) customDateConverter.convert(twoPblicteDe),
-                                    "", // bookIndex (목차)는 빈 문자열로 초기화
-                                    false,
-                                    BookState.ON_SALE,
-                                    100, // 재고
-                                    prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue), // 정가
-                                    0, // 판매가 (초기값 0)
-                                    0, // 리뷰 점수
-                                    imageUrl.isEmpty() ? "/images/default_book.png" : imageUrl,
-                                    new HashSet<>(), // authors
-                                    new HashSet<>(), // categories
-                                    new HashSet<>(), // tags
-                                    null, // publisher
-                                    0 // viewCount
-                            );
+                            Book book = Book.builder()
+                                    .isbn(isbnThirteenNo)
+                                    .bookName(titleNm)
+                                    .bookDescription(bookIntrcnCn)
+                                    .bookPublicationDate((LocalDate) customDateConverter.convert(twoPblicteDe))
+                                    .bookIndex("") // 목차 초기화
+                                    .bookPackaging(true)
+                                    .bookState(BookState.ON_SALE) // Enum 값 확인 필요 (SELL 또는 ON_SALE)
+                                    .bookStock(100)
+                                    .bookRegularPrice(prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue))
+                                    .bookSalePrice(prcValue.isEmpty() ? 0 : (int) Double.parseDouble(prcValue))
+                                    .bookReviewRate(0.0)
+                                    .publisher(new Publisher(publisherNm)) // 찾은 출판사 주입
+                                    .build();
 
                             // 출판사 연결
                             if (!publisherNm.isBlank()) {

@@ -8,14 +8,17 @@ import com.nhnacademy.book.dto.review.ReviewResponse;
 import com.nhnacademy.book.service.BookIndexService;
 import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.ReviewService;
+import com.nhnacademy.book.service.impl.BookAiRegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/books")
@@ -25,6 +28,7 @@ public class BookController {
     private final BookService bookService;
     private final ReviewService reviewService;
     private final BookIndexService bookIndexService;
+    private final BookAiRegistrationService bookRegistrationService;
 
     // 도서 목록 조회 API (BookListResponse 반환)
     // GET /api/books?page=0&size=20
@@ -44,14 +48,14 @@ public class BookController {
         return ResponseEntity.ok(bookService.getBook(bookId));
     }
 
-    // 도서 등록 API (BookCreateRequest 요청)
-    // POST /api/books
-    @PostMapping
-    public ResponseEntity<Long> createBook(@RequestBody BookCreateRequest request) {
-
-        Long bookId = bookService.createBook(request);
-
-        // 등록 성공 시 201 Created와 함께 생성된 ID 반환
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<Long> createBook(
+            @RequestPart("book") BookCreateRequest request,
+            // "image" -> "file" 로 변경
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        // 변수명도 image -> file로 맞춤 (Service 메서드 파라미터 이름과 통일)
+        Long bookId = bookService.createBook(request, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(bookId);
     }
 
@@ -100,6 +104,22 @@ public class BookController {
         return ResponseEntity.ok(reviewService.getReviewsByBookId(bookId, pageable));
     }
 
+    //AI 도서등록 정보 가져오기
+    @GetMapping("/isbn/{isbn}")
+    public ResponseEntity<BookCreateRequest> getBookInfoByIsbn(@PathVariable String isbn) {
+        BookCreateRequest response = bookRegistrationService.getBookInfoByIsbn(isbn);
+        return ResponseEntity.ok(response);
+    }
 
+    // 주문 서비스가 호출할 API
+    // 요청 예시: POST /api/books/1/deduct-stock  { "quantity": 2 }
+    @PostMapping("/{bookId}/deduct-stock")
+    public ResponseEntity<Void> deductStock(@PathVariable Long bookId, @RequestBody StockRequest request) {
 
+        bookService.deductStock(bookId, request.quantity());
+        return ResponseEntity.ok().build();
+    }
+
+    // DTO는 클래스 밑에 간단하게 record로 만들어도 됨
+    public record StockRequest(int quantity) {}
 }

@@ -1,87 +1,41 @@
-package com.nhnacademy.book.service;
+package com.nhnacademy.book.service.strategy.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nhnacademy.book.aladin.AladinResponse;
 import com.nhnacademy.book.dto.book.BookCreateRequest;
-import com.nhnacademy.book.entity.BookState;
+import com.nhnacademy.book.service.strategy.BookEnrichStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat.URI;
-
-@Slf4j
+@Component
 @RequiredArgsConstructor
-@Service
-public class BookRegistrationService {
+@Slf4j
+public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-
-    @Value("${aladin.api.ttb-key}") //키 만료 된듯.
-    private String ttbKey;
 
     @Value("${gemini.api.gemini-key}")
     private String geminiApiKey;
 
 
-    public BookCreateRequest getBookInfoByIsbn(String isbn) {
-        // 1. 알라딘에서 기초 데이터 조회 (Fact)
-        AladinResponse.Item aladinItem = fetchAladinData(isbn);
-
-        // 2. DTO 변환
-        BookCreateRequest rawRequest = mapToDto(aladinItem);
-
-        // 3. AI 보강 여부 판단 및 실행 (Enrichment)
-        if (needAiEnrichment(rawRequest)) {
-            return enrichWithAi(rawRequest);
-        }
-
-        return rawRequest;
+    //정보 보강 여부 -> 검색 api에서 가져온 인덱스가 비어있거나 설명이 50글자 이내.
+    @Override
+    public boolean isApplicable(BookCreateRequest request) {
+        return request.bookIndex().isEmpty() || request.bookDescription().length()<50;
     }
 
-
-    private AladinResponse.Item fetchAladinData(String isbn){
-        URI uri = UriComponentsBuilder
-                .fromHttpUrl("http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
-                .queryParam("ttbkey", ttbKey)
-                .queryParam("itemIdType", "ISBN13")
-                .queryParam("ItemId", isbn)
-                .queryParam("Output", "JS")
-                .queryParam("Version", "20131101")
-                .queryParam("OptResult", "toc") // 목차 포함 요청
-                .build()
-                .toUri();
-
-        try {
-            // getForObject: 객체로 바로 매핑
-            AladinResponse response = restTemplate.getForObject(uri, AladinResponse.class);
-
-            if (response == null || response.item() == null || response.item().isEmpty()) {
-                throw new IllegalArgumentException("알라딘에서 책을 찾을 수 없습니다: " + isbn);
-            }
-            return response.item().get(0);
-        } catch (Exception e) {
-            log.error("알라딘 API 호출 실패", e);
-            throw new RuntimeException("도서 정보를 가져오는 중 오류가 발생했습니다.");
-        }
-    }
-
-    private BookCreateRequest enrichWithAi(BookCreateRequest original){
+    @Override
+    public BookCreateRequest enrich(BookCreateRequest request) {
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -89,7 +43,7 @@ public class BookRegistrationService {
         // 2. 바디 설정 (Gemini API 스펙에 맞춘 Map 구조)
         // 구조: { "contents": [{ "parts": [{ "text": "프롬프트..." }] }] }
         Map<String, Object> requestBody = new HashMap<>();
-        String prompt = createPrompt(original);
+        String prompt = createPrompt(request);
 
         requestBody.put("contents", List.of(
                 Map.of("parts", List.of(
@@ -101,34 +55,15 @@ public class BookRegistrationService {
 
         try {
             // 3. POST 요청
-            // 응답 구조가 복잡하므로 일단 String(JSON)으로 받아서 직접 파싱하는 게 정신 건강에 좋습니다.
             String rawJsonParams = restTemplate.postForObject(url, entity, String.class);
 
             // 4. 응답 파싱 및 적용
-            return applyGeminiResponse(original, rawJsonParams);
+            return applyGeminiResponse(request, rawJsonParams);
 
         } catch (Exception e) {
             log.error("Gemini 호출 실패 - 원본 데이터만 반환합니다.", e);
-            return original; // AI 실패 시 원본 그대로 리턴 (장애 전파 방지)
+            return request;  // AI 실패 시 원본 그대로 리턴 (장애 전파 방지)
         }
-    }
-
-
-    private BookCreateRequest mapToDto(AladinResponse.Item item) {
-        LocalDate pubDate = LocalDate.parse(item.pubDate(), DateTimeFormatter.ISO_DATE);
-        String index = (item.subInfo() != null && item.subInfo().toc() != null) ? item.subInfo().toc() : "";
-
-        int noDiscountRate = item.priceStandard();
-
-        return new BookCreateRequest(
-                item.isbn(), item.title(), item.description(), item.publisher(),
-                pubDate, index, true, BookState.ON_SALE, 0,
-                item.priceStandard(), noDiscountRate, item.cover()
-        );
-    }
-
-    private boolean needAiEnrichment(BookCreateRequest request) {
-        return request.bookIndex().isEmpty() || request.bookDescription().length() < 50;
     }
 
     private String createPrompt(BookCreateRequest book) {
@@ -174,7 +109,7 @@ public class BookRegistrationService {
             return new BookCreateRequest(
                     original.isbn(), original.bookName(),
                     newDescription, // AI 설명 적용
-                    original.bookPublisher(), original.bookPublicationDate(),
+                    original.bookPublisher(), original.bookAuthor(),original.tags(), original.categoryIdList(), original.bookPublicationDate(),
                     newIndex,       // AI 목차 적용
                     original.bookPackaging(), original.bookState(), original.bookStock(),
                     original.bookRegularPrice(), original.bookSalePrice(), original.bookImage()

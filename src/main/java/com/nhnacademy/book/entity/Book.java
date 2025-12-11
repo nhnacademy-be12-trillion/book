@@ -1,97 +1,151 @@
 package com.nhnacademy.book.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.nhnacademy.book.exception.NotFoundBookIndexException;
 import com.nhnacademy.book.parser.CustomDateConverter;
 import com.nhnacademy.book.parser.CustomPriceConverter;
 import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvCustomBindByName;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.apache.commons.lang3.builder.ToStringExclude;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA용 기본 생성자 (외부 접근 차단)
 @Entity
 @Table(name = "Book")
 public class Book {
 
-    // 도서 ID
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long bookId;
 
-    // ISBN 번호
     @CsvBindByName(column = "ISBN_THIRTEEN_NO")
     @Column(unique = true)
     private String isbn;
 
-    // 책 제목
     @Lob
     @CsvBindByName(column = "TITLE_NM")
     private String bookName;
 
-    // 책 설명
     @Lob
     @CsvBindByName(column = "BOOK_INTRCN_CN")
     private String bookDescription;
 
-    //출판 일시
-    @CsvCustomBindByName(
-            column = "TWO_PBLICTE_DE",
-            converter = CustomDateConverter.class)
+    @CsvCustomBindByName(column = "TWO_PBLICTE_DE", converter = CustomDateConverter.class)
     private LocalDate bookPublicationDate;
 
-    // 목차
     @Lob
     private String bookIndex;
 
-    // 포장 여부
     private boolean bookPackaging;
 
-    // 책 상태
     @Enumerated(EnumType.STRING)
     private BookState bookState;
 
-    // 재고
     private int bookStock;
 
-    // 정가
-    @CsvCustomBindByName(
-            column = "PRC_VALUE",
-            converter = CustomPriceConverter.class // 가격 컨버터 지정
-    )
+    @CsvCustomBindByName(column = "PRC_VALUE", converter = CustomPriceConverter.class)
     private int bookRegularPrice;
 
-    // 판매가
     private int bookSalePrice;
 
-    // 리뷰 점수
+    @Setter
     private double bookReviewRate;
 
-    // 책 이미지 -> 파일 테이블에 따로 빼기?
-    @CsvBindByName(column = "IMAGE_URL")
-    private String bookImage;
+    @Lob
+    @Setter
+    private String bookReviewSummary;
+
+    // [변경] 이미지 컬럼 제거 (BookFile 테이블로 이관)
+    // @CsvBindByName(column = "IMAGE_URL")
+    // private String bookImage;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToStringExclude
+    @JsonBackReference
     private Set<BookAuthor> bookAuthors = new HashSet<>();
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToStringExclude
+    @JsonBackReference
     private Set<BookCategory> bookCategories = new HashSet<>();
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToStringExclude
+    @JsonBackReference
     private Set<BookTag> bookTags = new HashSet<>();
 
+    @Setter
     @ManyToOne(cascade = CascadeType.PERSIST)
     private Publisher publisher;
 
     @Column(columnDefinition = "integer default 0", nullable = false)
     private int viewCount;
 
+    // 빌더 패턴 생성자 (Setter 대신 사용)
+    @Builder
+    public Book(String isbn, String bookName, String bookDescription, LocalDate bookPublicationDate,
+                String bookIndex, boolean bookPackaging, BookState bookState, int bookStock,
+                int bookRegularPrice, int bookSalePrice, double bookReviewRate, Publisher publisher) {
+        this.isbn = isbn;
+        this.bookName = bookName;
+        this.bookDescription = bookDescription;
+        this.bookPublicationDate = bookPublicationDate;
+        this.bookIndex = bookIndex;
+        this.bookPackaging = bookPackaging;
+        this.bookState = bookState;
+        this.bookStock = bookStock;
+        this.bookRegularPrice = bookRegularPrice;
+        this.bookSalePrice = bookSalePrice;
+        this.bookReviewRate = bookReviewRate;
+        this.publisher = publisher;
+    }
+
+    // 도서 정보 수정 (Setter 대신 의미 있는 메서드 사용)
+    public void updateBookInfo(String bookName, String bookDescription, String bookIndex,
+                               boolean bookPackaging, BookState bookState, int bookStock, int bookSalePrice) {
+        this.bookName = bookName;
+        this.bookDescription = bookDescription;
+        this.bookIndex = bookIndex;
+        this.bookPackaging = bookPackaging;
+        this.bookState = bookState;
+        this.bookStock = bookStock;
+        this.bookSalePrice = bookSalePrice;
+    }
+
+    // 연관관계 편의 메서드
+    public void assignPublisher(Publisher publisher) {
+        this.publisher = publisher;
+    }
+
+    // 재고 차감 로직
+    public void deductStock(int quantity) {
+        int restStock = this.bookStock - quantity;
+        if (restStock < 0) {
+            throw new IllegalArgumentException("재고가 부족합니다.");
+        }
+        this.bookStock = restStock;
+
+        if (this.bookStock == 0) {
+            this.bookState = BookState.SOLD_OUT;
+        }
+    }
+
+    public void updateBookIndex(String toc){
+        if(Objects.isNull(toc)){
+            throw new NotFoundBookIndexException("목차 정보 없음");
+        }
+        this.bookIndex = toc;
+    }
+
+    // 판매 종료 처리 (삭제 대신 사용)
+    public void markAsSoldOut() {
+        this.bookState = BookState.SALE_END;
+    }
 }
