@@ -46,7 +46,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Query("""
         SELECT new com.nhnacademy.book.client.order.dto.OrderBookResponse(b.bookId, b.bookName, b.bookSalePrice, b.bookPackaging, f.fileUrl)
         FROM Book b
-        LEFT JOIN FETCH b.publisher
         LEFT JOIN BookFile f ON b.bookId = f.joinedId AND f.fileType = :fileType
         WHERE b.bookId IN :bookIds
     """)

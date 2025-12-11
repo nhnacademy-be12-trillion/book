@@ -56,7 +56,7 @@ public class OrderBookService {
     // 주문 취소 / 주문 상품 환불을 위한 재고 증가 메서드
     @Transactional
     public void increaseStock(UUID sagaId, Map<Long, Integer> quantityMap) {
-        OrderBookSagaLogId sagaLogId = new OrderBookSagaLogId(sagaId, OrderSagaType.DECREASE_STOCK);
+        OrderBookSagaLogId sagaLogId = new OrderBookSagaLogId(sagaId, OrderSagaType.INCREASE_STOCK);
         OrderBookSagaLog sagaLog = new OrderBookSagaLog(sagaLogId);
 
         // 이미 처리된 작업이라면 즉시 리턴 (에러가 아님)
