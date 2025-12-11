@@ -42,8 +42,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             "LEFT JOIN BookFile f ON b.bookId = f.joinedId AND f.fileType = :fileType") // [2] 이미지: 매핑 없으니 직접 'ON'으로 조인
     Page<Object[]> findAllBooksWithImage(Pageable pageable, @Param("fileType") FileType fileType);
 
-    List<OrderBookResponse> findAllBooksInBookIdsWithImage(List<Long> bookIds, @Param("fileType") FileType fileType);
-
     // 주문 통신 전용 DTO 프로젝션
     @Query("""
         SELECT new com.nhnacademy.book.client.order.dto.OrderBookResponse(b.bookId, b.bookName, b.bookSalePrice, b.bookPackaging, f.fileUrl)
