@@ -25,35 +25,43 @@ public class OrderBookController {
 
     // URI가 RESTful하지 않지만 의도가 명확해서 내부 통신용으로는 괜찮을듯 함
     @PatchMapping("/api/order-books/decrease-stocks")
-    public ResponseEntity<Void> decreaseStocks(@RequestHeader("X-SAGA-ID") String sagaHeader,
+    public ResponseEntity<String> decreaseStocks(@RequestHeader("X-SAGA-ID") String sagaHeader,
                                                @RequestBody OrderBookStockRequest request) {
-        UUID sagaId = UUID.fromString(sagaHeader);
-
         try {
+            UUID sagaId = UUID.fromString(sagaHeader);
+
             orderBookService.decreaseStock(sagaId, request.quantityMap());
-        } catch (NotEnoughStockException e) {
-            return ResponseEntity.badRequest().build();
+        } catch (NullPointerException | IllegalArgumentException | NotEnoughStockException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
 
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/api/order-books/increase-stocks")
-    public ResponseEntity<Void> increaseStocks(@RequestHeader("X-SAGA-ID") String sagaHeader,
+    public ResponseEntity<String> increaseStocks(@RequestHeader("X-SAGA-ID") String sagaHeader,
                                                @RequestBody OrderBookStockRequest request) {
-        UUID sagaId = UUID.fromString(sagaHeader);
+        try {
+            UUID sagaId = UUID.fromString(sagaHeader);
 
-        orderBookService.increaseStock(sagaId, request.quantityMap());
+            orderBookService.increaseStock(sagaId, request.quantityMap());
+        } catch (NullPointerException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
 
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/api/order-books/rollback-stocks")
-    public ResponseEntity<Void> rollbackStocks(@RequestHeader("X-SAGA-ID") String sagaHeader,
+    public ResponseEntity<String> rollbackStocks(@RequestHeader("X-SAGA-ID") String sagaHeader,
                                                @RequestBody OrderBookStockRequest request) {
-        UUID sagaId = UUID.fromString(sagaHeader);
+        try {
+            UUID sagaId = UUID.fromString(sagaHeader);
 
-        orderBookService.rollbackStock(sagaId, request.quantityMap());
+            orderBookService.rollbackStock(sagaId, request.quantityMap());
+        } catch (NullPointerException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
 
         return ResponseEntity.ok().build();
     }
