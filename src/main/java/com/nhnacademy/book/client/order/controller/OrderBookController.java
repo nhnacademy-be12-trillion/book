@@ -23,7 +23,7 @@ public class OrderBookController {
         return ResponseEntity.ok(responses);
     }
 
-    // URI가 RESTful하지 않지만 의도가 명확해서 괜찮을듯 함
+    // URI가 RESTful하지 않지만 의도가 명확해서 내부 통신용으로는 괜찮을듯 함
     @PatchMapping("/api/order-books/decrease-stocks")
     public ResponseEntity<Void> decreaseStocks(@RequestHeader("X-SAGA-ID") String sagaHeader,
                                                @RequestBody OrderBookStockRequest request) {
