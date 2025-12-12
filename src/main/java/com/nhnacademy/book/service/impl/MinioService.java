@@ -1,5 +1,6 @@
 package com.nhnacademy.book.service.impl;
 
+import com.nhnacademy.book.exception.ExternalApiCallException;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,7 @@ public class MinioService {
 
         } catch (Exception e) {
             log.error("MinIO 이미지 업로드 실패", e);
-            throw new RuntimeException("이미지 업로드에 실패했습니다.");
+            throw new ExternalApiCallException("이미지 업로드에 실패했습니다.");
         }
     }
 
@@ -75,8 +76,7 @@ public class MinioService {
 
             int responseCode = conn.getResponseCode();
             if (responseCode != 200) {
-                log.warn("알라딘 이미지 다운로드 실패 (HTTP Code: {}): {}", responseCode, imageUrl);
-                return null;
+              throw new ExternalApiCallException("외부 이미자 다운 실패");
             }
 
             // 이미지를 byte 배열로 한 번에 읽어옴
@@ -110,8 +110,8 @@ public class MinioService {
 
         } catch (Exception e) {
             log.error("URL 업로드 최종 실패: {} / 사유: {}", imageUrl, e.getMessage());
+            throw new ExternalApiCallException("Mino에 url 저장하는 도중 예외 발생");
             // 실패 시 null 반환 -> DB에는 원본 URL 저장
-            return null;
         }
 
     }

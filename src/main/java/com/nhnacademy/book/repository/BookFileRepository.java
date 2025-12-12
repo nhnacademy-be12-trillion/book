@@ -18,8 +18,6 @@ public interface BookFileRepository extends JpaRepository<BookFile, Long> {
     //리뷰 한개에 달린 여러장의 이미지
     List<BookFile> findAllByJoinedIdAndFileType(Long joinedId, FileType fileType);
 
-    List<BookFile> findAllByFileTypeAndJoinedIdIn(FileType fileType, List<Long> joinedIds);
-
-
+    List<BookFile> findAllByJoinedIdInAndFileType(List<Long> joinedIds, FileType fileType);
 
 }

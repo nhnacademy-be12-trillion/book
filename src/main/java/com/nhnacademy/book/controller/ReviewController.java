@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
@@ -27,13 +26,9 @@ public class ReviewController {
     /**
      * 리뷰 등록
      * [POST] /api/reviews
-     * Content-Type: multipart/form-data
-     *
-     * @param request  : 리뷰 내용 (JSON) -> @RequestPart("request")
-     * @param images   : 이미지 파일 리스트 (File) -> @RequestPart("images")
-     * @param memberId : 헤더에서 추출한 회원 ID
+     * Header: X-Member-Id
      */
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/api/reviews", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Long> createReview(
             @RequestPart("request") ReviewCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
@@ -44,25 +39,11 @@ public class ReviewController {
     }
 
     /**
-     * 특정 도서의 리뷰 목록 조회 (페이징)
-     * [GET] /api/reviews/books/{bookId}?page=0&size=10
-     */
-    @GetMapping("/books/{bookId}")
-    public ResponseEntity<Page<ReviewResponse>> getReviewsByBookId(
-            @PathVariable Long bookId,
-            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
-        Page<ReviewResponse> reviews = reviewService.getReviewsByBookId(bookId, pageable);
-        return ResponseEntity.ok(reviews);
-    }
-
-    /**
      * 리뷰 수정
      * [PUT] /api/reviews/{reviewId}
-     * Content-Type: application/json
-     * (현재 로직상 이미지는 수정하지 않고 내용/평점만 수정함)
+     * Header: X-Member-Id
      */
-    @PutMapping("/{reviewId}")
+    @PutMapping("/api/reviews/{reviewId}")
     public ResponseEntity<Void> updateReview(
             @PathVariable Long reviewId,
             @RequestBody ReviewUpdateRequest request,
@@ -72,13 +53,31 @@ public class ReviewController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/members/{memberId}")
-    public ResponseEntity<Page<ReviewResponse>> getReviewsByMember(
-            @PathVariable Long memberId,
+    /**
+     * 특정 도서의 리뷰 목록 조회
+     * [GET] /api/books/{bookId}/reviews
+     * (이건 로그인 안 해도 볼 수 있으므로 헤더 불필요)
+     */
+    @GetMapping("/api/books/{bookId}/reviews")
+    public ResponseEntity<Page<ReviewResponse>> getReviewsByBookId(
+            @PathVariable Long bookId,
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<ReviewResponse> reviews = reviewService.getReviewsByBookId(bookId, pageable);
+        return ResponseEntity.ok(reviews);
+    }
+
+    /**
+     * 마이페이지 - 내 리뷰 목록 조회
+     * [GET] /api/mypage/reviews
+     * Header: X-Member-Id
+     */
+    @GetMapping("/api/mypage/reviews")
+    public ResponseEntity<Page<ReviewResponse>> getMyReviews(
+            @RequestHeader("X-Member-Id") Long memberId,
             @PageableDefault(size = 10, sort = "reviewId", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<ReviewResponse> responses = reviewService.getReviewsByMemberId(memberId, pageable);
-
         return ResponseEntity.ok(responses);
     }
 }

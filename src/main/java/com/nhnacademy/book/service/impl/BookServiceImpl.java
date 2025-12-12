@@ -5,22 +5,28 @@ import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import com.nhnacademy.book.entity.*;
+import com.nhnacademy.book.exception.AlreadyEnrolledException;
+import com.nhnacademy.book.exception.BookNotFoundException;
+import com.nhnacademy.book.exception.CategoryNotFoundException;
 import com.nhnacademy.book.repository.*;
 import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class BookServiceImpl implements BookService {
 
@@ -37,6 +43,7 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public Page<BookListResponse> getBooks(Pageable pageable) {
+        // Object 타입은 어떤 걸 가져오는지 너무 불명확함 수정 필요
         Page<Object[]> results = bookRepository.findAllBooksWithImage(pageable, FileType.BOOK);
 
         return results.map(row -> {
@@ -45,13 +52,30 @@ public class BookServiceImpl implements BookService {
             return BookListResponse.from(book, imageUrl);
         });
     }
+    // 조회수 많은 도서 5개 조회
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookListResponse> getPopularBooks() {
+        List<Book> books = bookRepository.findTop5ByOrderByViewCountDesc();
+        return convertToDtoList(books);
+    }
+
+    // 카테고리별 신간 5개 조회
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookListResponse> getBooksByCategory(Long categoryId) {
+        // 0페이지에서 5개만 가져오라 (LIMIT 5 효과)
+        Pageable limitFive = PageRequest.of(0, 5);
+        List<Book> books = bookRepository.findBooksByCategoryId(categoryId, limitFive);
+        return convertToDtoList(books);
+    }
 
     // 도서 상세 조회
     @Override
     @Transactional(readOnly = true)
     public BookDetailResponse getBook(Long bookId) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 도서가 존재하지 않습니다. ID: " + bookId));
+                .orElseThrow(() -> new BookNotFoundException("해당 도서가 존재하지 않습니다. ID: " + bookId));
 
         String imageUrl = fileRepository.findFirstByJoinedIdAndFileType(bookId,FileType.BOOK)
                 .map(BookFile::getFileUrl)
@@ -64,6 +88,10 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional
     public Long createBook(BookCreateRequest request, MultipartFile file) {
+
+        if(bookRepository.existsBookByIsbn(request.isbn())){
+            throw new AlreadyEnrolledException("이미 등록된 도서입니다.");
+        }
 
         // 이미지 업로드 처리
         String uploadUrl = null;
@@ -120,12 +148,12 @@ public class BookServiceImpl implements BookService {
         return savedBook.getBookId();
     }
 
-    // 도서 수정 (비즈니스 메서드 적용)
+    // 도서 수정
     @Override
     @Transactional
     public void updateBook(Long bookId, BookUpdateRequest request) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("수정할 도서가 없습니다. ID: " + bookId));
+                .orElseThrow(() -> new BookNotFoundException("수정할 도서가 없습니다. ID: " + bookId));
 
         int newSalePrice = calculateSalePrice(book.getBookRegularPrice(), request.discountRate());
 
@@ -150,19 +178,18 @@ public class BookServiceImpl implements BookService {
         }
     }
 
-    // 도서 삭제 (비즈니스 메서드 적용)
+    // 도서 삭제
     @Override
     @Transactional
     public void deleteBook(Long bookId) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("삭제할 도서가 없습니다. ID: " + bookId));
+                .orElseThrow(() -> new BookNotFoundException("삭제할 도서가 없습니다. ID: " + bookId));
 
-        // book.setBookState(...) 대신 의미 있는 메서드 사용
         book.markAsSoldOut();
     }
 
-    // 기타 메서드들
     @Override
+    @Transactional
     public void increaseViewCount(Long bookId) {
         bookRepository.updateViewCount(bookId);
     }
@@ -171,7 +198,7 @@ public class BookServiceImpl implements BookService {
     @Transactional
     public void deductStock(Long bookId, int quantity) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("책이 없습니다."));
+                .orElseThrow(() -> new BookNotFoundException("해당 도서를 찾을 수 없습니다."));
         book.deductStock(quantity);
     }
 
@@ -180,7 +207,31 @@ public class BookServiceImpl implements BookService {
         return (int) Math.round(regularPrice * (1 - discountRate / 100.0));
     }
 
-    // --- Helper Methods (코드 깔끔하게 분리) ---
+    private List<BookListResponse> convertToDtoList(List<Book> books) {
+        if (books.isEmpty())
+            return List.of();
+
+        // 책 ID 추출
+        List<Long> bookIds = books.stream().map(Book::getBookId).toList();
+
+        // 이미지 일괄 조회 (IN 쿼리)
+        List<BookFile> images = fileRepository.findAllByJoinedIdInAndFileType(bookIds, FileType.BOOK);
+
+        // Map 변환 (BookId -> ImageUrl)
+        Map<Long, String> imageMap = images.stream()
+                .collect(Collectors.toMap(
+                        BookFile::getJoinedId,
+                        BookFile::getFileUrl,
+                        (oldVal, newVal) -> oldVal // 중복 시 기존 것 유지
+                ));
+
+        // DTO 변환
+        return books.stream()
+                .map(book -> BookListResponse.from(book, imageMap.get(book.getBookId())))
+                .collect(Collectors.toList());
+    }
+
+    // --- Helper Methods ---
     private void processAuthors(Book book, String authorStr) {
         if (authorStr != null && !authorStr.isBlank()) {
             for (String name : authorStr.split(",")) {
@@ -211,7 +262,7 @@ public class BookServiceImpl implements BookService {
         if (categoryIds != null && !categoryIds.isEmpty()) {
             for (Long catId : categoryIds) {
                 Category category = categoryRepository.findById(catId)
-                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리 ID: " + catId));
+                        .orElseThrow(() -> new CategoryNotFoundException("존재하지 않는 카테고리 ID: " + catId));
                 book.getBookCategories().add(new BookCategory(category, book));
             }
         }
