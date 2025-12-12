@@ -4,6 +4,7 @@ import com.nhnacademy.book.dto.review.ReviewCreateRequest;
 import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
 import com.nhnacademy.book.dto.review.ReviewResponse;
 import com.nhnacademy.book.entity.*;
+import com.nhnacademy.book.exception.*;
 import com.nhnacademy.book.repository.BookFileRepository;
 import com.nhnacademy.book.repository.BookRepository;
 import com.nhnacademy.book.repository.MemberRepository;
@@ -43,10 +44,11 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 도서 및 회원 존재 확인 (Gateway ID는 신뢰하지만, DB에 객체가 있어야 JPA 연결 가능)
         Book book = bookRepository.findById(request.bookId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서입니다."));
+                .orElseThrow(() -> new BookNotFoundException("존재하지 않는 도서입니다."));
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 회원입니다."));
+
 
         // TODO: [비즈니스 검증] 사용자가 이 책을 구매했는지 확인하는 로직 추가
 
@@ -96,7 +98,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .map(Review::getReviewId)
                 .toList();
 
-        List<BookFile> fileList = bookFileRepository.findAllByFileTypeAndJoinedIdIn(FileType.REVIEW,reviewIds);
+        List<BookFile> fileList = bookFileRepository.findAllByJoinedIdInAndFileType(reviewIds, FileType.REVIEW);
 
         // 조회한 이미지들을 '리뷰 ID'를 키(Key)로 하는 맵(Map)으로 변환 (메모리 작업)
         // 구조: Map<리뷰ID, List<이미지URL>>
@@ -121,13 +123,13 @@ public class ReviewServiceImpl implements ReviewService {
     public void updateReview(Long reviewId, ReviewUpdateRequest request, Long memberId) {
 
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리뷰입니다."));
+                .orElseThrow(() -> new ReviewNotFoundException("존재하지 않는 리뷰입니다."));
 
         // 소유권 검증 로직
         // Gateway ID와 리뷰 작성자 ID가 다르면 권한 없음
         if (!review.getMember().getMemberId().equals(memberId)) {
             // Global Exception Handler가 403을 반환하도록 식별자를 포함한 RuntimeException 사용
-            throw new RuntimeException("AUTHORIZATION_FAILURE: 리뷰 수정 권한이 없습니다. (작성자 ID 불일치)");
+            throw new ReviewAccessDeniedException("AUTHORIZATION_FAILURE: 리뷰 수정 권한이 없습니다. (작성자 ID 불일치)");
         }
 
         // Review 엔티티 수정 (JPA 변경 감지)
@@ -149,7 +151,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // Book 엔티티 조회
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("도서가 존재하지 않습니다."));
+                .orElseThrow(() -> new BookNotFoundException("도서가 존재하지 않습니다."));
 
         // Book 엔티티의 평점 필드 업데이트
         book.setBookReviewRate(averageRating != null ? Math.round(averageRating * 100.0) / 100.0 : 0.0);
@@ -172,7 +174,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .toList();
 
         // 파일 리포지토리에서 리뷰 ID들에 해당하는 이미지 일괄 조회
-        List<BookFile> fileList = bookFileRepository.findAllByFileTypeAndJoinedIdIn(FileType.REVIEW, reviewIds);
+        List<BookFile> fileList = bookFileRepository.findAllByJoinedIdInAndFileType(reviewIds, FileType.REVIEW);
 
         // 메모리 그룹핑 (Map<리뷰ID, 이미지URL리스트>)
         Map<Long, List<String>> reviewImageMap = fileList.stream()
