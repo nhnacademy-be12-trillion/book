@@ -174,3 +174,7 @@ DELETE http://localhost:10413/test/minio/bucket
 ###
 # 17. [가격 데이터 보정]
 POST {{host}}/api/admin/migration/price/fix
+
+###
+# 18. 베스트 셀러 테스트
+GET {{host}}/api/books/best-sellers

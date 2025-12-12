@@ -1,5 +1,6 @@
 package com.nhnacademy.book.controller;
 
+import com.nhnacademy.book.client.order.OrderClient;
 import com.nhnacademy.book.dto.book.BookCreateRequest;
 import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
@@ -20,10 +21,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
 public class BookController {
+    private final OrderClient orderClient;
 
     private final BookService bookService;
     private final ReviewService reviewService;
@@ -46,6 +50,15 @@ public class BookController {
         // 조회수 증가 (DB 바로 안 가고 메모리에 쌓임)
         bookService.increaseViewCount(bookId);
         return ResponseEntity.ok(bookService.getBook(bookId));
+    }
+
+    // 베스트셀러 도서 목록 조회 API
+    @GetMapping("/best-sellers")
+    public ResponseEntity<List<Long>> getBestSellers() {
+        // TODO: 베스트셀러 도서 ID 받아서 List<Long> bookIds를 파라미터로 받아 해당 도서 정보 반환하는 기능 만들기
+        // List<Long> bestSellerBookIds = orderClient.getTopSellingBookIds(5);
+
+        return ResponseEntity.ok(orderClient.getTopSellingBookIds(5));
     }
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
