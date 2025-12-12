@@ -3,8 +3,10 @@ package com.nhnacademy.book.dto.book;
 import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.BookState;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
+//태그도 같이 뿌림
 public record BookListResponse(
         Long bookId,    // 상세 페이지 이동용
         String bookName,
@@ -15,13 +17,19 @@ public record BookListResponse(
         int bookSalePrice,
         int discountRate,
         double bookReviewRate,
-        String bookImage
+        String bookImage,
+        List<String> bookTags
 ) {
 
     public static BookListResponse from(Book book, String imageUrl) {
         String authors = book.getBookAuthors().stream()
                 .map(ba -> ba.getAuthor().getAuthorName())
                 .collect(Collectors.joining(", "));
+
+        List<String> tagList = book.getBookTags().stream()
+                .map(bookTag -> bookTag.getTag().getTagName())
+                .collect(Collectors.toList());
+
         // 할인율 = (정가 - 판매가) / 정가 * 100
         int discountRate = 0;
         if (book.getBookRegularPrice() > 0) { // 0으로 나누기 방지
@@ -40,7 +48,8 @@ public record BookListResponse(
                 book.getBookSalePrice(),
                 discountRate,
                 book.getBookReviewRate(),
-                imageUrl // 여기서 DB가 아닌, 파라미터로 받은 URL을 넣음
+                imageUrl, // 여기서 DB가 아닌, 파라미터로 받은 URL을 넣음
+                tagList
         );
     }
 }

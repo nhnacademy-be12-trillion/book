@@ -244,7 +244,7 @@
 //    void getReviewsByBookId() throws Exception {
 //        // given
 //        Long bookId = 1L;
-//        ReviewResponse review = new ReviewResponse(1L, 5, "좋아요", LocalDateTime.now(), "작성자");
+//        ReviewResponse review = new ReviewResponse(1L, 5, "좋아요", LocalDateTime.now(), "작성자", );
 //        Page<ReviewResponse> page = new PageImpl<>(List.of(review));
 //
 //        given(reviewService.getReviewsByBookId(eq(bookId), any(Pageable.class))).willReturn(page);

@@ -1,7 +1,6 @@
 package com.nhnacademy.book.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.nhnacademy.book.exception.NotFoundBookIndexException;
 import com.nhnacademy.book.parser.CustomDateConverter;
 import com.nhnacademy.book.parser.CustomPriceConverter;
 import com.opencsv.bean.CsvBindByName;
@@ -137,12 +136,6 @@ public class Book {
         }
     }
 
-    public void updateBookIndex(String toc){
-        if(Objects.isNull(toc)){
-            throw new NotFoundBookIndexException("목차 정보 없음");
-        }
-        this.bookIndex = toc;
-    }
 
     // 판매 종료 처리 (삭제 대신 사용)
     public void markAsSoldOut() {

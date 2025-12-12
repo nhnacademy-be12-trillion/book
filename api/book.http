@@ -2,12 +2,14 @@
 @host = http://localhost:10413
 @bookId = 1
 @memberId = 1
+# 테스트할 카테고리 ID (DB에 존재하는 ID여야 함)
+@categoryId = 1
 # 테스트 후 생성된 리뷰 ID를 여기에 적어서 수정 테스트에 쓰세요
 @targetReviewId = 1
 
 ###
 # 1. [도서 목록 조회] (Read - List)
-GET {{host}}/api/books?page=0&size=5
+GET {{host}}/api/books?page=0&size=20
 
 ###
 # 2. [도서 등록] (Create)
@@ -31,7 +33,8 @@ Content-Type: application/json
   "bookStock": 100,
   "bookRegularPrice": 50000,
   "bookSalePrice": 50000,
-  "bookImage": "/images/intellij_test.png"
+  "bookImage": "/images/intellij_test.png",
+  "categoryIdList": [1]
 }
 --boundary
 Content-Disposition: form-data; name="file"; filename="test.txt"
@@ -90,7 +93,7 @@ Content-Type: image/png
 
 ###
 # 6. [리뷰 목록 조회] (특정 도서)
-GET {{host}}/api/reviews/books/{{bookId}}
+GET {{host}}/api/books/{{bookId}}/reviews
 Accept: application/json
 
 ###
@@ -125,7 +128,8 @@ X-Member-Id: 99
 ###
 # 18. [리뷰 목록 조회] (특정 멤버가 작성한 리뷰)
 # 페이징 파라미터(?page=0&size=10)를 포함했습니다.
-GET {{host}}/api/reviews/members/{{memberId}}?page=0&size=10
+GET {{host}}/api/mypage/reviews
+X-Member-Id: 1
 Accept: application/json
 
 ###
@@ -133,9 +137,16 @@ Accept: application/json
 POST {{host}}/api/books/toc/augment
 
 ###
-# 11. [위시리스트] (찜하기 / 찜취소)
-# ★수정됨: Header가 X-Member-Id로 변경됨 (통일성을 위해)
+# 11. [위시리스트] (찜하기 / 찜취소 토글)
+# 결과: true(찜성공), false(찜취소)
 POST {{host}}/api/wishlists/{{bookId}}
+Content-Type: application/json
+X-Member-Id: {{memberId}}
+
+###
+# 11-1. [위시리스트 목록 조회]
+# 기대값: 방금 찜한 책 정보 + imageUrl이 정상적으로 매핑되어야 함
+GET {{host}}/api/wishlists
 Content-Type: application/json
 X-Member-Id: {{memberId}}
 
@@ -174,6 +185,29 @@ DELETE http://localhost:10413/test/minio/bucket
 ###
 # 17. [가격 데이터 보정]
 POST {{host}}/api/admin/migration/price/fix
+
+
+### ==========================================================
+### [NEW] 메인 페이지 섹션별 조회 테스트
+### ==========================================================
+
+###
+# 19. [메인] 베스트셀러 조회 (조회수 기준 Top 5)
+# 기대결과: viewCount가 높은 순서대로 최대 5권 반환
+GET {{host}}/api/books/popularBooks
+Accept: application/json
+
+###
+# 20. [메인] 카테고리별 신간 조회 (출판일 기준 Top 5)
+# 기대결과: 해당 카테고리에 속한 책 중 최신순으로 5권 반환
+GET {{host}}/api/books/categories/30/top
+Accept: application/json
+
+###
+# 21. [데이터 세팅] 조회수 증가시키기 (베스트셀러 순위 조작용)
+# 이 API를 bookId를 바꿔가며 여러 번 호출하면 베스트셀러 순위가 바뀝니다.
+GET {{host}}/api/books/99
+Accept: application/json
 
 ###
 # 18. 베스트 셀러 테스트
