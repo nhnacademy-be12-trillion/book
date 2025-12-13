@@ -2,6 +2,9 @@ package com.nhnacademy.book.service.impl;
 
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.entity.*; // FileType 등 포함
+import com.nhnacademy.book.exception.BookNotFoundException;
+import com.nhnacademy.book.exception.MemberNotFoundException;
+import com.nhnacademy.book.exception.WishlistNotFoundException;
 import com.nhnacademy.book.repository.BookFileRepository; // 추가 필요
 import com.nhnacademy.book.repository.BookRepository;
 import com.nhnacademy.book.repository.MemberRepository;
@@ -29,16 +32,16 @@ public class WishlistServiceImpl implements WishlistService {
     public boolean toggleWishlist(Long memberId, Long bookId) {
         // 회원 조회
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다. ID: " + memberId));
+                .orElseThrow(() -> new MemberNotFoundException("회원 정보를 찾을 수 없습니다. ID: " + memberId));
 
         // 도서 조회
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("도서 정보를 찾을 수 없습니다. ID: " + bookId));
+                .orElseThrow(() -> new BookNotFoundException("도서 정보를 찾을 수 없습니다. ID: " + bookId));
 
         // 중복 확인 및 토글 로직
         if (wishlistRepository.existsByMemberAndBook(member, book)) {
             Wishlist wishlist = wishlistRepository.findByMemberAndBook(member, book)
-                    .orElseThrow(() -> new IllegalStateException("데이터 불일치: 찜 내역이 존재해야 합니다."));
+                    .orElseThrow(() -> new WishlistNotFoundException("데이터 불일치: 찜 내역이 존재해야 합니다."));
             wishlistRepository.delete(wishlist);
             return false; // 찜 취소
         } else {
