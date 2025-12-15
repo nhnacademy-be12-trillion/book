@@ -13,17 +13,16 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin/categories")
+@RequestMapping("/admin/categories")
 public class CategoryAdminController {
 
     private final CategoryService categoryService;
 
-    //Ai 도서 등록시 카테고리 검색
+    //AI 도서 등록 시 카테고리 검색 API
     @GetMapping("/search")
     public ResponseEntity<List<CategorySearchResponse>> searchCategories(@RequestParam String keyword) {
         // 유효성 검사: 검색어가 없으면 빈 리스트 반환 (200 OK)
         List<CategorySearchResponse> searchCategories = categoryService.searchCategories(keyword);
-
         // 결과 반환 (200 OK)
         return ResponseEntity.ok(searchCategories);
     }

@@ -6,7 +6,7 @@ import com.nhnacademy.book.client.order.saga.domain.OrderBookSagaLogId;
 import com.nhnacademy.book.client.order.saga.repository.OrderBookSagaLogRepository;
 import com.nhnacademy.book.client.order.saga.domain.OrderSagaType;
 import com.nhnacademy.book.entity.FileType;
-import com.nhnacademy.book.exception.NotEnoughStockException;
+import com.nhnacademy.book.exception.StockNotEnoughException;
 import com.nhnacademy.book.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,7 +45,7 @@ public class OrderBookService {
             // 재고 감소를 실패한 경우 (bookStock < quantity인 경우)
             if (updatedRows == 0) {
                 // 여기서 던져진 예외는 컨트롤러에서 catch해서 4xx 에러 반환
-                throw new NotEnoughStockException("재고가 부족한 도서: " + bookId);
+                throw new StockNotEnoughException("재고가 부족한 도서: " + bookId);
             }
         });
 

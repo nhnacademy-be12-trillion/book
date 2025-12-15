@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({AlreadyEnrolledException.class,
-    NotEnoughStockException.class})
+    StockNotEnoughException.class})
     public ResponseEntity<ExceptionResponse> handleAlreadyEnrolledException(AlreadyEnrolledException e){
         ExceptionResponse response = ExceptionResponse.of(
                 "STATE_CONFLICT",

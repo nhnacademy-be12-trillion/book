@@ -6,7 +6,6 @@ import com.nhnacademy.book.entity.BookState;
 import java.util.List;
 import java.util.stream.Collectors;
 
-//태그도 같이 뿌림
 public record BookListResponse(
         Long bookId,    // 상세 페이지 이동용
         String bookName,

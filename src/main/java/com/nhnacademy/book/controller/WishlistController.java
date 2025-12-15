@@ -13,17 +13,14 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/wishlists")
+@RequestMapping("/wishlists")
 @RequiredArgsConstructor
 public class WishlistController {
 
     private final WishlistService wishlistService;
 
-    /**
-     * 위시리스트 조회
-     * GET /api/wishlists
-     * 헤더(X-Member-Id)가 없으면 로컬 테스트용(1L) 사용
-     */
+     // 위시리스트 조회 API
+     // GET /api/wishlists
     @GetMapping
     public ResponseEntity<List<BookListResponse>> getWishlists(
             @RequestHeader(name = "X-Member-Id", required = false) Long xUserId) {
@@ -36,14 +33,11 @@ public class WishlistController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 위시리스트 토글 (담기/취소)
-     * POST /api/wishlists/{bookId}
-     * 헤더(X-Member-Id)가 없으면 로컬 테스트용(1L) 사용
-     */
-    @PostMapping("/{bookId}")
+     // 위시리스트 토글 (담기/취소)
+     // POST /api/wishlists/{bookId}
+    @PostMapping("/{book-id}")
     public ResponseEntity<Map<String, Object>> toggleWishlist(
-            @PathVariable Long bookId,
+            @PathVariable("book-id") Long bookId,
             @RequestHeader(name = "X-Member-Id", required = false) Long xUserId) {
 
         // 헤더 값 우선 사용, 없으면 테스트용 1L

@@ -3,7 +3,7 @@ package com.nhnacademy.book.client.order.controller;
 import com.nhnacademy.book.client.order.dto.OrderBookResponse;
 import com.nhnacademy.book.client.order.dto.OrderBookStockRequest;
 import com.nhnacademy.book.client.order.service.OrderBookService;
-import com.nhnacademy.book.exception.NotEnoughStockException;
+import com.nhnacademy.book.exception.StockNotEnoughException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +31,7 @@ public class OrderBookController {
             UUID sagaId = UUID.fromString(sagaHeader);
 
             orderBookService.decreaseStock(sagaId, request.quantityMap());
-        } catch (NullPointerException | IllegalArgumentException | NotEnoughStockException e) {
+        } catch (NullPointerException | IllegalArgumentException | StockNotEnoughException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
 

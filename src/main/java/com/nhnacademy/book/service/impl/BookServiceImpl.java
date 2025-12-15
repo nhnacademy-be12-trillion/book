@@ -194,13 +194,13 @@ public class BookServiceImpl implements BookService {
         bookRepository.updateViewCount(bookId);
     }
 
-    @Override
-    @Transactional
-    public void deductStock(Long bookId, int quantity) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new BookNotFoundException("해당 도서를 찾을 수 없습니다."));
-        book.deductStock(quantity);
-    }
+//    @Override
+//    @Transactional
+//    public void deductStock(Long bookId, int quantity) {
+//        Book book = bookRepository.findById(bookId)
+//                .orElseThrow(() -> new BookNotFoundException("해당 도서를 찾을 수 없습니다."));
+//        book.deductStock(quantity);
+//    }
 
     @Override
     public int calculateSalePrice(int regularPrice, double discountRate) {

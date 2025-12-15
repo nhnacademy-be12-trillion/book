@@ -5,8 +5,6 @@ import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.impl.BookAiRegistrationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +13,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/admin/books")
+@RequestMapping("/admin/books")
 public class AdminBookController {
     private final BookService bookService;
     private final BookAiRegistrationService bookAiRegistrationService;
 
-    //도서 등록.
+    //도서 등록 API
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Long> createBook(
             @RequestPart("book") BookCreateRequest request,
@@ -34,28 +32,24 @@ public class AdminBookController {
 
 
     // 도서 수정 API
-    //관리자 전용
-    @PutMapping("/{bookId}")
-    public ResponseEntity<Void> updateBook(@PathVariable Long bookId, @RequestBody BookUpdateRequest request) {
+    @PutMapping("/{book-id}")
+    public ResponseEntity<Void> updateBook(@PathVariable("book-id") Long bookId, @RequestBody BookUpdateRequest request) {
         bookService.updateBook(bookId, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build(); // 반환할 내용 없음 204
     }
 
+    // 도서 삭제 API
+    @DeleteMapping("/{book-id}")
+    public ResponseEntity<Void> deleteBook(@PathVariable("book-id") Long bookId) {
+        bookService.deleteBook(bookId);
+        return ResponseEntity.noContent().build();  // 반환할 내용 없음 204
+    }
 
-    //AI 도서 정보 가져오기 -> 관리자가 isbn 검색 -> 얘를 호출..
+    // 알라딘 API에서 ISBN으로 도서 정보 호출 API
     @GetMapping("/isbn/{isbn}")
     public ResponseEntity<BookCreateRequest> getBookInfoByIsbn(@PathVariable String isbn) {
         BookCreateRequest response = bookAiRegistrationService.getBookInfoByIsbn(isbn);
         return ResponseEntity.ok(response);
     }
-
-    // 도서 삭제 API
-    @DeleteMapping("/{bookId}")
-    public ResponseEntity<Void> deleteBook(@PathVariable Long bookId) {
-        bookService.deleteBook(bookId);
-        return ResponseEntity.ok().build();
-    }
-
-
 
 }

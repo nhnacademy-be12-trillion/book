@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/books/categories")
+@RequestMapping("/books/categories")
 @RequiredArgsConstructor
 public class CategoryController {
 
     private final CategoryService categoryService;
 
+    // 카테고리 전체 조회 API
     @GetMapping
     public ResponseEntity<List<CategoryTreeResponse>> getAllCategories() {
         List<CategoryTreeResponse> responses = categoryService.getCategoryTree();

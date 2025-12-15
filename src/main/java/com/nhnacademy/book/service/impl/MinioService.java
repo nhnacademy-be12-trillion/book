@@ -63,7 +63,7 @@ public class MinioService {
     // URL 이미지 다운로드 및 업로드
     public String uploadFromUrl(String imageUrl) {
         try {
-            // --- 1단계: 알라딘에서 이미지 다운로드 (메모리에 저장) ---
+            // 알라딘에서 이미지 다운로드 (메모리에 저장)
             URL url = new URL(imageUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
@@ -71,7 +71,7 @@ public class MinioService {
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
             conn.setRequestProperty("Referer", "https://www.aladin.co.kr/");
             conn.setRequestMethod("GET");
-            conn.setConnectTimeout(5000); // 5초 (너무 길면 줄이세요)
+            conn.setConnectTimeout(5000); // 5초
             conn.setReadTimeout(5000);
 
             int responseCode = conn.getResponseCode();
@@ -87,7 +87,7 @@ public class MinioService {
                 contentType = conn.getContentType();
             }
 
-            // --- 2단계: MinIO로 업로드 ---
+            // MinIO로 업로드
             String extension = (contentType != null && contentType.contains("png")) ? ".png" : ".jpg";
             String fileName = UUID.randomUUID().toString() + extension;
 
@@ -98,7 +98,7 @@ public class MinioService {
                     PutObjectArgs.builder()
                             .bucket(bucketName)
                             .object(fileName)
-                            .stream(bais, imageBytes.length, -1) // 이제 정확한 파일 크기(imageBytes.length)를 압니다!
+                            .stream(bais, imageBytes.length, -1)
                             .contentType(contentType != null ? contentType : "image/jpeg")
                             .build()
             );
