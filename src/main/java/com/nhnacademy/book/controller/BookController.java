@@ -35,30 +35,19 @@ public class BookController {
     // GET /api/books?page=0&size=20
     @GetMapping
     public ResponseEntity<Page<BookListResponse>> getBooks(
-            @PageableDefault(size = 20, sort = "bookId", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(page = 0, size = 20, sort = "bookId", direction = Sort.Direction.DESC) Pageable pageable) {
 
         return ResponseEntity.ok(bookService.getBooks(pageable));
     }
 
     // 도서 상세 조회 API (BookDetailResponse 반환)
     // GET /api/books/{bookId}
-    @GetMapping("/{bookId}")
-    public ResponseEntity<BookDetailResponse> getBook(@PathVariable Long bookId) {
+    @GetMapping("/{book-id}")
+    public ResponseEntity<BookDetailResponse> getBook(@PathVariable("book-id") Long bookId) {
         // 조회수 증가 (DB 바로 안 가고 메모리에 쌓임)
         bookService.increaseViewCount(bookId);
         return ResponseEntity.ok(bookService.getBook(bookId));
     }
-
-
-//    // 도서별 리뷰 목록 조회 API
-//    // GET /api/books/{bookId}/reviews?page=0&size=5
-//    @GetMapping("/{bookId}/reviews")
-//    public ResponseEntity<Page<ReviewResponse>> getReviewsByBookId(
-//            @PathVariable Long bookId,
-//            Pageable pageable) {
-//
-//        return ResponseEntity.ok(reviewService.getReviewsByBookId(bookId, pageable));
-//    }
 
     // 베스트셀러 도서 목록 조회 API
     @GetMapping("/best-sellers")
@@ -72,7 +61,7 @@ public class BookController {
      * 베스트셀러 Top 5 조회
      * GET /api/books/bestsellers
      */
-    @GetMapping("/popularBooks")
+    @GetMapping("/popular-books")
     public ResponseEntity<List<BookListResponse>> getPopularBooks() {
         return ResponseEntity.ok(bookService.getPopularBooks());
     }
@@ -81,8 +70,8 @@ public class BookController {
      * 카테고리별 신간 Top 5 조회
      * GET /api/books/categories/{categoryId}/top
      */
-    @GetMapping("/categories/{categoryId}/top")
-    public ResponseEntity<List<BookListResponse>> getBooksByCategory(@PathVariable Long categoryId) {
+    @GetMapping("/categories/{category-id}/top")
+    public ResponseEntity<List<BookListResponse>> getBooksByCategory(@PathVariable("category-id") Long categoryId) {
         return ResponseEntity.ok(bookService.getBooksByCategory(categoryId));
     }
 }
