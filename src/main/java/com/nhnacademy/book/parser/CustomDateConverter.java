@@ -19,11 +19,10 @@ public class CustomDateConverter extends AbstractBeanField<Book, LocalDate> {
     private static final DateTimeFormatter FORMATTER_NODASH = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Override
-    protected Object convert(String value) throws CsvDataTypeMismatchException {
+    protected Object convert(String value) {
         if (value == null || value.isEmpty()) {
             return LocalDate.now(); // CSV 값이 비어있으면 현재 날짜
         }
-
         try {
             if (value.contains("-")) {
                 // "yyyy-MM-dd" 형식 파싱

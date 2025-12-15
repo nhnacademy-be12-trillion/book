@@ -8,31 +8,34 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({BookNotFoundException.class})
-    public ResponseEntity<ExceptionResponse> handleBookNotFoundException(BookNotFoundException e){
+    @ExceptionHandler({BookNotFoundException.class,
+    CategoryNotFoundException.class, MemberNotFoundException.class,
+    WishlistNotFoundException.class, ReviewNotFoundException.class})
+    public ResponseEntity<ExceptionResponse> handleNotFoundException(Exception e){
         ExceptionResponse response = ExceptionResponse.of(
-                "BOOK_NOT_FOUND",
+                "DATA_NOT_FOUND",
                 e.getMessage()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    @ExceptionHandler(CategoryNotFoundException.class)
-    public ResponseEntity<ExceptionResponse> handleCategoryNotFoundException(CategoryNotFoundException e){
-        ExceptionResponse response = ExceptionResponse.of(
-                "CATEGORY_NOT_FOUND",
-                e.getMessage()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
-
-    @ExceptionHandler(AlreadyEnrolledException.class)
+    @ExceptionHandler({AlreadyEnrolledException.class,
+    StockNotEnoughException.class})
     public ResponseEntity<ExceptionResponse> handleAlreadyEnrolledException(AlreadyEnrolledException e){
         ExceptionResponse response = ExceptionResponse.of(
                 "STATE_CONFLICT",
                 e.getMessage()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(ReviewAccessDeniedException.class)
+    public ResponseEntity<ExceptionResponse> handleReviewAccessDeniedException(ReviewAccessDeniedException e){
+        ExceptionResponse response = ExceptionResponse.of(
+                "ACCESS_DENIED",
+                e.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     @ExceptionHandler(ExternalApiCallException.class)

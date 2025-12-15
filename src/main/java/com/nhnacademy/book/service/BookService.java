@@ -37,8 +37,9 @@ public interface BookService {
     void increaseViewCount(Long bookId);
 
     // 도서 수량
-    public void deductStock(Long bookId, int quantity);
+//    public void deductStock(Long bookId, int quantity);
 
+    // 할인율 계산
     int calculateSalePrice(int regularPrice, double discountRate);
 
 }

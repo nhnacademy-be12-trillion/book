@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomPriceConverter extends AbstractBeanField<Book, Integer> { // Integer 반환
 
     @Override
-    protected Object convert(String value) throws CsvDataTypeMismatchException {
+    protected Object convert(String value) {
         if (value == null || value.isEmpty()) {
             return 0; // CSV 값이 비어있으면 0
         }

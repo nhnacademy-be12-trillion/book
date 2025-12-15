@@ -1,6 +1,7 @@
 package com.nhnacademy.book.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.nhnacademy.book.exception.StockNotEnoughException;
 import com.nhnacademy.book.parser.CustomDateConverter;
 import com.nhnacademy.book.parser.CustomPriceConverter;
 import com.opencsv.bean.CsvBindByName;
@@ -11,7 +12,6 @@ import org.apache.commons.lang3.builder.ToStringExclude;
 
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Getter
@@ -127,7 +127,7 @@ public class Book {
     public void deductStock(int quantity) {
         int restStock = this.bookStock - quantity;
         if (restStock < 0) {
-            throw new IllegalArgumentException("재고가 부족합니다.");
+            throw new StockNotEnoughException("재고가 부족합니다.");
         }
         this.bookStock = restStock;
 

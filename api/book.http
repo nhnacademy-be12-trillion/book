@@ -2,9 +2,9 @@
 @host = http://localhost:10413
 @bookId = 1
 @memberId = 1
-# 테스트할 카테고리 ID (DB에 존재하는 ID여야 함)
+# 테스트할 카테고리 ID
 @categoryId = 1
-# 테스트 후 생성된 리뷰 ID를 여기에 적어서 수정 테스트에 쓰세요
+# 테스트 후 생성된 리뷰 ID
 @targetReviewId = 1
 
 ###
