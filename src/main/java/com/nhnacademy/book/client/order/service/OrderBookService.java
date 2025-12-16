@@ -1,10 +1,12 @@
 package com.nhnacademy.book.client.order.service;
 
 import com.nhnacademy.book.client.order.dto.OrderBookResponse;
+import com.nhnacademy.book.client.order.dto.OrderBook;
 import com.nhnacademy.book.client.order.saga.domain.OrderBookSagaLog;
 import com.nhnacademy.book.client.order.saga.domain.OrderBookSagaLogId;
 import com.nhnacademy.book.client.order.saga.repository.OrderBookSagaLogRepository;
 import com.nhnacademy.book.client.order.saga.domain.OrderSagaType;
+import com.nhnacademy.book.entity.BookCategory;
 import com.nhnacademy.book.entity.FileType;
 import com.nhnacademy.book.exception.StockNotEnoughException;
 import com.nhnacademy.book.repository.BookRepository;
@@ -14,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -25,7 +29,18 @@ public class OrderBookService {
     // 도서 정보 조회 -> 멱등성이 보장되므로 사가 ID 불필요
     @Transactional(readOnly = true)
     public List<OrderBookResponse> getAllBookByBookIds(List<Long> bookIds) {
-        return bookRepository.findBooksInfoForOrderByIds(bookIds, FileType.BOOK);
+        Map<Long, Set<Long>> bookCategoryIdsMap = bookRepository.findBookCategoriesByBookIdIn(bookIds).stream()
+                .collect(Collectors.groupingBy(
+                        bookCategory -> bookCategory.getBook().getBookId(),
+                        Collectors.mapping(bookCategory ->
+                                bookCategory.getCategory().getCategoryId(),
+                                Collectors.toSet())
+                ));
+        List<OrderBook> books = bookRepository.findBooksInfoForOrderByIds(bookIds, FileType.BOOK);
+
+        return books.stream()
+                .map(orderBook -> OrderBookResponse.create(orderBook, bookCategoryIdsMap.get(orderBook.bookId())))
+                .toList();
     }
 
     // 주문 생성을 위한 재고 감소 메서드
