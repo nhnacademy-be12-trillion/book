@@ -4,6 +4,7 @@ import com.nhnacademy.book.dto.book.BookCreateRequest;
 import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
+import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,4 +46,6 @@ public interface BookService {
     // 할인율 계산
     int calculateSalePrice(int regularPrice, double discountRate);
 
+    //
+    List<CategoryTreeResponse> getRootCategories();
 }

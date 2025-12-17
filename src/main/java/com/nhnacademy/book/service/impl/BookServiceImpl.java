@@ -4,6 +4,7 @@ import com.nhnacademy.book.dto.book.BookCreateRequest;
 import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
+import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.entity.*;
 import com.nhnacademy.book.exception.AlreadyEnrolledException;
 import com.nhnacademy.book.exception.BookNotFoundException;
@@ -292,5 +293,22 @@ public class BookServiceImpl implements BookService {
                 book.getBookCategories().add(new BookCategory(category, book));
             }
         }
+    }
+
+    // 1차 카테고리만 반환하도록 매핑 로직 수정
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryTreeResponse> getRootCategories() {
+        // parent가 없는 최상위 카테고리만 조회
+        List<Category> rootCategories = categoryRepository.findAllByParentIsNull();
+
+        // Entity -> DTO 변환 (CategoryTreeResponse 생성자 호출)
+        return rootCategories.stream()
+                .map(category -> new CategoryTreeResponse(
+                        category.getCategoryId(),
+                        category.getCategoryName(),
+                        List.of() // 메인 페이지 버튼용
+                ))
+                .collect(Collectors.toList());
     }
 }

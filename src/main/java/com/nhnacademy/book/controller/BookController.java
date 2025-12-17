@@ -3,6 +3,7 @@ package com.nhnacademy.book.controller;
 import com.nhnacademy.book.client.order.OrderClient;
 import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
+import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -63,5 +64,10 @@ public class BookController {
     @GetMapping("/categories/{category-id}/top")
     public ResponseEntity<List<BookListResponse>> getBooksByCategory( @PathVariable("category-id") Long categoryId) {
         return ResponseEntity.ok(bookService.getBooksByCategory(categoryId));
+    }
+
+    @GetMapping("/categories/roots")
+    public ResponseEntity<List<CategoryTreeResponse>> getRootCategories() {
+        return ResponseEntity.ok(bookService.getRootCategories());
     }
 }
