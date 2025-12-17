@@ -15,6 +15,9 @@ public interface BookService {
     // 도서 목록 조회 (List DTO 사용)
     Page<BookListResponse> getBooks(Pageable pageable);
 
+    // ID 리스트를 파라미터로 받아 해당 도서 정보를 반환하는 기능
+    List<BookListResponse> getBooksByIds(List<Long> bookIds);
+
     // [지금 많이 보는 도서] 5개 조회
     List<BookListResponse> getPopularBooks();
 

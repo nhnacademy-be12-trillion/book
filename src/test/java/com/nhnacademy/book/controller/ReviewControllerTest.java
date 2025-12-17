@@ -4,6 +4,7 @@
 //import com.nhnacademy.book.dto.review.ReviewCreateRequest;
 //import com.nhnacademy.book.dto.review.ReviewResponse;
 //import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
+//import com.nhnacademy.book.entity.Tag;
 //import com.nhnacademy.book.service.ReviewService;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@
 //import org.springframework.test.web.servlet.MockMvc;
 //
 //import java.time.LocalDateTime;
+//import java.util.ArrayList;
 //import java.util.List;
 //
 //import static org.mockito.ArgumentMatchers.any;
@@ -93,8 +95,9 @@
 //    void getReviewsByBookId() throws Exception {
 //        // given
 //        Long bookId = 10L;
+//
 //        ReviewResponse reviewResponse = new ReviewResponse(
-//                100L, 5, "최고예요", LocalDateTime.now(), "작성자"
+//                100L, 5L, "짱구는 못말려",5,"최고예요", LocalDateTime.now(), "작성자", "이미지");
 //        );
 //        Page<ReviewResponse> page = new PageImpl<>(List.of(reviewResponse));
 //

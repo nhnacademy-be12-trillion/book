@@ -45,13 +45,13 @@ public class BookController {
     // 베스트셀러 도서 목록 조회 API
     // GET /api/books//best-sellers
     @GetMapping("/best-sellers")
-    public ResponseEntity<List<Long>> getBestSellers() {
-        // TODO: 베스트셀러 도서 ID 받아서 List<Long> bookIds를 파라미터로 받아 해당 도서 정보 반환하는 기능 만들기
-        // List<Long> bestSellerBookIds = orderClient.getTopSellingBookIds(5);
-
-        return ResponseEntity.ok(orderClient.getTopSellingBookIds(5));
+    public ResponseEntity<List<BookListResponse>> getBestSellers() {
+        // 베스트셀러 도서 ID 받아서 List<Long> bookIds를 파라미터로 받아 해당 도서 정보 반환하는 기능
+         List<Long> bookIds = orderClient.getTopSellingBookIds(5);
+         List<BookListResponse> bestSellers = bookService.getBooksByIds(bookIds);
+        return ResponseEntity.ok(bestSellers);
     }
-    // 베스트셀러 Top 5 조회 API
+    // 조회 수 많은 책 Top 5 조회 API
     // GET /api/books/popular-books
     @GetMapping("/popular-books")
     public ResponseEntity<List<BookListResponse>> getPopularBooks() {
@@ -61,7 +61,7 @@ public class BookController {
      // 카테고리별 신간 Top 5 조회 API
      // GET /api/books/categories/{category-id}/top
     @GetMapping("/categories/{category-id}/top")
-    public ResponseEntity<List<BookListResponse>> getBooksByCategory(@PathVariable("category-id") Long categoryId) {
+    public ResponseEntity<List<BookListResponse>> getBooksByCategory( @PathVariable("category-id") Long categoryId) {
         return ResponseEntity.ok(bookService.getBooksByCategory(categoryId));
     }
 }

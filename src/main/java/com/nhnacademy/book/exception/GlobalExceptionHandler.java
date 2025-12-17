@@ -1,10 +1,12 @@
 package com.nhnacademy.book.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -12,8 +14,9 @@ public class GlobalExceptionHandler {
     CategoryNotFoundException.class, MemberNotFoundException.class,
     WishlistNotFoundException.class, ReviewNotFoundException.class})
     public ResponseEntity<ExceptionResponse> handleNotFoundException(Exception e){
+        log.warn("DATA_NOT_FOUND");
         ExceptionResponse response = ExceptionResponse.of(
-                "DATA_NOT_FOUND",
+                HttpStatus.NOT_FOUND.toString(),
                 e.getMessage()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -22,8 +25,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({AlreadyEnrolledException.class,
     StockNotEnoughException.class})
     public ResponseEntity<ExceptionResponse> handleAlreadyEnrolledException(AlreadyEnrolledException e){
+        log.warn("STATE_CONFLICT");
         ExceptionResponse response = ExceptionResponse.of(
-                "STATE_CONFLICT",
+                HttpStatus.CONFLICT.toString(),
                 e.getMessage()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
@@ -31,8 +35,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ReviewAccessDeniedException.class)
     public ResponseEntity<ExceptionResponse> handleReviewAccessDeniedException(ReviewAccessDeniedException e){
+        log.warn("ACCESS_DENIED");
         ExceptionResponse response = ExceptionResponse.of(
-                "ACCESS_DENIED",
+                HttpStatus.FORBIDDEN.toString(),
                 e.getMessage()
         );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
@@ -40,8 +45,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExternalApiCallException.class)
     public ResponseEntity<ExceptionResponse> handleExternalApiCallException(ExternalApiCallException e){
+        log.warn("EXTERNAL_API_ERROR");
         ExceptionResponse response = ExceptionResponse.of(
-                "EXTERNAL_API_ERROR",
+                HttpStatus.BAD_GATEWAY.toString(),
                 e.getMessage()
         );
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);

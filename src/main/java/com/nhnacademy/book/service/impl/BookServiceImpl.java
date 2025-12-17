@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
+
     private final FileService fileService;
     private final BookFileRepository fileRepository;
     private final MinioService minioService;
@@ -52,6 +53,31 @@ public class BookServiceImpl implements BookService {
             return BookListResponse.from(book, imageUrl);
         });
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookListResponse> getBooksByIds(List<Long> bookIds) {
+        if (bookIds == null || bookIds.isEmpty()) {
+            return List.of();
+        }
+
+        // DB에서 일단 다 가져옴 (순서는 보장 안 됨)
+        List<Book> books = bookRepository.findAllById(bookIds);
+
+        // 가져온 책들을 ID 기준으로 Map에 담음 (빠르게 찾기 위해)
+        Map<Long, Book> bookMap = books.stream()
+                .collect(Collectors.toMap(Book::getBookId, book -> book));
+
+        // 원래 요청받은 ID 순서(랭킹)대로 리스트를 다시 만듦
+        List<Book> sortedBooks = bookIds.stream()
+                .filter(bookMap::containsKey) // DB에 있는 것만
+                .map(bookMap::get)            // Map에서 꺼냄
+                .collect(Collectors.toList());
+
+        //뎌 DTO로 변환해서 반환 (이미지 처리 포함된 기존 메서드 활용)
+        return convertToDtoList(sortedBooks);
+    }
+
     // 조회수 많은 도서 5개 조회
     @Override
     @Transactional(readOnly = true)
