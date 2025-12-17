@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "order-server", url = "http://localhost:10407")
+@FeignClient(name = "order-service")
 public interface OrderClient {
-    @GetMapping("/api/order-items/top-selling")
+    @GetMapping("/order-items/top-selling")
     List<Long> getTopSellingBookIds(@RequestParam int limit);
 }

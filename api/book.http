@@ -211,4 +211,4 @@ Accept: application/json
 
 ###
 # 18. 베스트 셀러 테스트
-GET {{host}}/api/books/best-sellers
+GET {{host}}/books/best-sellers

@@ -1,7 +1,8 @@
 package com.nhnacademy.book.repository;
 
-import com.nhnacademy.book.client.order.dto.OrderBookResponse;
+import com.nhnacademy.book.client.order.dto.OrderBook;
 import com.nhnacademy.book.entity.Book;
+import com.nhnacademy.book.entity.BookCategory;
 import com.nhnacademy.book.entity.FileType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,14 +35,23 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             "ORDER BY b.bookPublicationDate DESC")
     List<Book> findBooksByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
 
+    // 주문 통신 전용 카테고리 배치 조회
+    @Query("""
+        SELECT bc
+        FROM Book b
+        JOIN b.bookCategories bc
+        WHERE b.bookId IN :bookIds
+    """)
+    List<BookCategory> findBookCategoriesByBookIdIn(List<Long> bookIds);
+
     // 주문 통신 전용 DTO 프로젝션
     @Query("""
-        SELECT new com.nhnacademy.book.client.order.dto.OrderBookResponse(b.bookId, b.bookName, b.bookSalePrice, b.bookPackaging, f.fileUrl)
+        SELECT new com.nhnacademy.book.client.order.dto.OrderBook(b.bookId, b.bookName, b.bookSalePrice, b.bookPackaging, f.fileUrl)
         FROM Book b
         LEFT JOIN BookFile f ON b.bookId = f.joinedId AND f.fileType = :fileType
         WHERE b.bookId IN :bookIds
     """)
-    List<OrderBookResponse> findBooksInfoForOrderByIds(@Param("bookIds") List<Long> bookIds, @Param("fileType") FileType fileType);
+    List<OrderBook> findBooksInfoForOrderByIds(@Param("bookIds") List<Long> bookIds, @Param("fileType") FileType fileType);
 
     // 주문 통신 전용 재고 감소
     @Modifying
