@@ -48,7 +48,7 @@ public class OrderBookController {
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/books/stock/rollback")
+    @PatchMapping("/books/stocks/rollback")
     public ResponseEntity<String> rollbackStocks(@RequestHeader("X-Saga-Id") UUID sagaId,
                                                @RequestBody OrderBookStockRequest request) {
         try {
