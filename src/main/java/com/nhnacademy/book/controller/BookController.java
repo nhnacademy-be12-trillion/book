@@ -5,7 +5,6 @@ import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.service.BookService;
-import com.nhnacademy.book.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +21,6 @@ import java.util.List;
 public class BookController {
 
     private final BookService bookService;
-    private final ReviewService reviewService;
     private final OrderClient orderClient;
 
     // 도서 목록 조회 API
