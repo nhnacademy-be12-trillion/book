@@ -110,7 +110,7 @@ X-Member-Id: {{memberId}}
 
 ###
 # 8. [도서 상세 조회] (평균 평점 업데이트 확인)
-GET {{host}}/api/books/{{bookId}}
+GET {{host}}/books/73987
 Accept: application/json
 
 ###
@@ -200,13 +200,13 @@ Accept: application/json
 ###
 # 20. [메인] 카테고리별 신간 조회 (출판일 기준 Top 5)
 # 기대결과: 해당 카테고리에 속한 책 중 최신순으로 5권 반환
-GET {{host}}/api/books/categories/30/top
+GET {{host}}/books/categories/1/top
 Accept: application/json
 
 ###
 # 21. [데이터 세팅] 조회수 증가시키기 (베스트셀러 순위 조작용)
 # 이 API를 bookId를 바꿔가며 여러 번 호출하면 베스트셀러 순위가 바뀝니다.
-GET {{host}}/api/books/99
+GET {{host}}/books/99
 Accept: application/json
 
 ###
