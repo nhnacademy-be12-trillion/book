@@ -1,8 +1,10 @@
 package com.nhnacademy.book.service.impl;
 
+import com.nhnacademy.book.dto.category.BookCategoryResponse;
 import com.nhnacademy.book.dto.category.CategorySearchResponse;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.entity.Category;
+import com.nhnacademy.book.repository.BookCategoryRepository;
 import com.nhnacademy.book.repository.CategoryRepository;
 import com.nhnacademy.book.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final BookCategoryRepository bookCategoryRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -27,6 +30,13 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryList.stream()
                 .map(this::toTreeDto)
                 .toList();
+    }
+
+    //해당 값은 dto
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookCategoryResponse> getCategoryIds(List<Long> bookIds) {
+        return bookCategoryRepository.findBookCategoryIds(bookIds);
     }
 
     @Override

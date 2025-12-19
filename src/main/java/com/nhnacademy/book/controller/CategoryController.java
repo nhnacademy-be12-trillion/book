@@ -1,5 +1,6 @@
 package com.nhnacademy.book.controller;
 
+import com.nhnacademy.book.dto.category.BookCategoryResponse;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,10 @@ public class CategoryController {
     public ResponseEntity<List<CategoryTreeResponse>> getAllCategories() {
         List<CategoryTreeResponse> responses = categoryService.getCategoryTree();
         return ResponseEntity.ok(responses);
+    }
+    @GetMapping(params = "bookIds")
+    public List<BookCategoryResponse> getBookCategories(List<Long> bookIds) {
+        return categoryService.getCategoryIds(bookIds);
     }
 
 }

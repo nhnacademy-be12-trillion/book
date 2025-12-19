@@ -1,0 +1,22 @@
+server:
+  port: 10413
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true # SQL 로그 확인용
+  cloud:
+    config:
+      enabled: false
+  config:
+    import: optional:123
+
+eureka:
+  client:
+    enabled: false
