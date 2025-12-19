@@ -40,6 +40,11 @@ public class BookController {
         bookService.increaseViewCount(bookId);
         return ResponseEntity.ok(bookService.getBook(bookId));
     }
+    @GetMapping(params = "bookIds")
+    public List<BookListResponse> getBooks(List<Long> bookIds) {
+        return bookService.getBooksByIds(bookIds);
+    }
+
 
     // 베스트셀러 도서 목록 조회 API
     // GET /api/books//best-sellers
