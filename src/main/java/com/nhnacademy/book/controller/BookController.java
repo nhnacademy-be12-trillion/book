@@ -41,7 +41,7 @@ public class BookController {
         return ResponseEntity.ok(bookService.getBook(bookId));
     }
     @GetMapping(params = "bookIds")
-    public List<BookListResponse> getBooks(List<Long> bookIds) {
+    public List<BookListResponse> getBooks(@RequestParam List<Long> bookIds) {
         return bookService.getBooksByIds(bookIds);
     }
 
