@@ -1,6 +1,5 @@
 package com.nhnacademy.book.client.order.controller;
 
-import com.nhnacademy.book.client.order.dto.OrderBook;
 import com.nhnacademy.book.client.order.dto.OrderBookResponse;
 import com.nhnacademy.book.client.order.dto.OrderBookStockRequest;
 import com.nhnacademy.book.client.order.service.OrderBookService;
