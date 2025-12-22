@@ -24,56 +24,59 @@ public class OrderBookRepository {
     public void decreaseStock(Map<Long, Integer> quantityMap) {
         List<Long> bookIds = new ArrayList<>(quantityMap.keySet());
         
-        // 1. 필요한 모든 책의 정보를 배치 조회
+        // 상태 변경 로직을 위해 현재 도서 정보를 가져옴
         Map<Long, Book> bookMap = bookRepository.findBooksByBookIdIn(bookIds).stream()
                 .collect(Collectors.toMap(Book::getBookId, Function.identity()));
 
-        // 2. 재고가 충분한지 확인
-        for (Long bookId : bookIds) {
+        String sql = "UPDATE Book SET bookStock = bookStock - ?, bookState = ? WHERE bookId = ? AND bookStock >= ?";
+
+        int[][] updateCounts = jdbcTemplate.batchUpdate(sql, bookIds, 100, (PreparedStatement ps, Long bookId) -> {
+            int quantity = quantityMap.get(bookId);
             Book book = bookMap.get(bookId);
-            if (book == null || book.getBookStock() < quantityMap.get(bookId)) {
-                throw new StockNotEnoughException("재고가 부족한 도서가 포함되어 있습니다: " + bookId);
+
+            // 오직 상태 결정을 위한 계산
+            int newStockForStateCheck = book.getBookStock() - quantity;
+            String newState = (newStockForStateCheck == 0) ? BookState.SOLD_OUT.name() : book.getBookState().name();
+
+            ps.setInt(1, quantity);      // 1: 차감할 수량
+            ps.setString(2, newState);   // 2: 새로운 상태
+            ps.setLong(3, bookId);       // 3: 도서 ID
+            ps.setInt(4, quantity);      // 4: WHERE 절에서 확인할 수량
+        });
+
+        // 배치 업데이트 결과 확인
+        int bookIndex = 0;
+        for (int[] batchResult : updateCounts) {
+            for (int count : batchResult) {
+                if (count == 0) {
+                    Long failedBookId = bookIds.get(bookIndex);
+                    throw new StockNotEnoughException("재고가 부족한 도서가 포함되어 있습니다: " + failedBookId);
+                }
+                bookIndex++;
             }
         }
-
-        // 3. JdbcTemplate을 사용하여 Batch Update 실행
-        String sql = "UPDATE Book SET bookStock = ?, bookState = ? WHERE bookId = ?";
-
-        jdbcTemplate.batchUpdate(sql, bookIds, 100, (PreparedStatement ps, Long bookId) -> {
-            Book book = bookMap.get(bookId);
-            int quantity = quantityMap.get(bookId);
-            int newStock = book.getBookStock() - quantity;
-            
-            String newState = (newStock == 0) ? BookState.SOLD_OUT.name() : book.getBookState().name();
-
-            ps.setInt(1, newStock);
-            ps.setString(2, newState);
-            ps.setLong(3, bookId);
-        });
     }
 
     public void bulkIncreaseStock(Map<Long, Integer> quantityMap) {
         List<Long> bookIds = new ArrayList<>(quantityMap.keySet());
 
-        // 1. 필요한 모든 책의 정보를 한 번의 쿼리로 가져옴
+        // 상태 변경 로직을 위해 현재 도서 정보를 가져옴
         Map<Long, Book> bookMap = bookRepository.findBooksByBookIdIn(bookIds).stream()
                 .collect(Collectors.toMap(Book::getBookId, Function.identity()));
 
-        // 2. JdbcTemplate을 사용하여 Batch Update를 실행
-        String sql = "UPDATE Book SET bookStock = ?, bookState = ? WHERE bookId = ?";
+        String sql = "UPDATE Book SET bookStock = bookStock + ?, bookState = ? WHERE bookId = ?";
 
         jdbcTemplate.batchUpdate(sql, bookIds, 100, (PreparedStatement ps, Long bookId) -> {
             Book book = bookMap.get(bookId);
             int quantity = quantityMap.get(bookId);
-            int newStock = book.getBookStock() + quantity;
 
             // 현재 상태가 SOLD_OUT 이었다면 ON_SALE으로 변경
             String newState = (book.getBookState() == BookState.SOLD_OUT) ?
                     BookState.ON_SALE.name() : book.getBookState().name();
 
-            ps.setInt(1, newStock);
-            ps.setString(2, newState);
-            ps.setLong(3, bookId);
+            ps.setInt(1, quantity);     // 1: 증가시킬 수량
+            ps.setString(2, newState);  // 2: 새로운 상태
+            ps.setLong(3, bookId);      // 3: 도서 ID
         });
     }
 }
