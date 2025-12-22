@@ -15,6 +15,7 @@ import com.nhnacademy.book.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -315,10 +316,14 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public Page<BookListResponse> getBooksByCategoryPage(Long categoryId, Pageable pageable) {
-        // [수정됨] 엔티티 필드명(bookCategories)에 맞춘 리포지토리 메서드 호출
-        Page<Book> books = bookRepository.findByBookCategories_Category_CategoryId(categoryId, pageable);
+        // 1. 카테고리에 해당하는 책들을 페이징하여 조회
+        Page<Book> bookPage = bookRepository.findByBookCategories_Category_CategoryId(categoryId, pageable);
 
-        // Entity -> DTO 변환
-        return books.map(BookListResponse::from);
+        // 2. 조회된 책 리스트(Content)를 꺼내서 이미지가 포함된 DTO 리스트로 변환
+        // (이미 만들어두신 convertToDtoList 메서드 활용)
+        List<BookListResponse> bookListResponses = convertToDtoList(bookPage.getContent());
+
+        // 3. 변환된 리스트와 페이징 정보를 이용해 새로운 Page 객체 생성하여 반환
+        return new PageImpl<>(bookListResponses, pageable, bookPage.getTotalElements());
     }
 }
