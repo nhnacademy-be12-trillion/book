@@ -40,8 +40,8 @@ public class BookController {
         bookService.increaseViewCount(bookId);
         return ResponseEntity.ok(bookService.getBook(bookId));
     }
-    @GetMapping(params = "bookIds")
-    public List<BookListResponse> getBooks(@RequestParam List<Long> bookIds) {
+    @GetMapping(params = "bookOrders")
+    public List<BookListResponse> getBooks(@RequestParam List<Long> bookIds,@RequestParam List<Long> quantities) {
         return bookService.getBooksByIds(bookIds);
     }
 

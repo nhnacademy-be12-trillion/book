@@ -1,6 +1,6 @@
 package com.nhnacademy.book.service.impl;
 
-import com.nhnacademy.book.dto.category.BookCategoryResponse;
+import com.nhnacademy.book.dto.category.BookWithCategory;
 import com.nhnacademy.book.dto.category.CategorySearchResponse;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.entity.Category;
@@ -35,7 +35,7 @@ public class CategoryServiceImpl implements CategoryService {
     //해당 값은 dto
     @Override
     @Transactional(readOnly = true)
-    public List<BookCategoryResponse> getCategoryIds(List<Long> bookIds) {
+    public List<BookWithCategory> getCategoryIds(List<Long> bookIds) {
         return bookCategoryRepository.findBookCategoryIds(bookIds);
     }
 

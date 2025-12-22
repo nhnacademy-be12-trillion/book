@@ -1,7 +1,7 @@
 package com.nhnacademy.book.repository;
 
 import com.nhnacademy.book.RepositoryTest;
-import com.nhnacademy.book.dto.category.BookCategoryResponse;
+import com.nhnacademy.book.dto.category.BookWithCategory;
 import com.nhnacademy.book.entity.Book;
 import com.nhnacademy.book.entity.BookCategory;
 import com.nhnacademy.book.entity.Category;
@@ -23,7 +23,7 @@ class BookCategoryRepositoryTest {
     @Test
     @DisplayName("없으면 빈 리스트가 나온다.")
     void getBookCategoryByIdTest() {
-        List<BookCategoryResponse> bookCategoryIds = bookCategoryRepository.findBookCategoryIds(List.of(12L));
+        List<BookWithCategory> bookCategoryIds = bookCategoryRepository.findBookCategoryIds(List.of(12L));
         Assertions.assertThat(bookCategoryIds).isEmpty();
     }
 
@@ -50,7 +50,7 @@ class BookCategoryRepositoryTest {
         bookCategoryRepository.save(bookCategory1);
         bookCategoryRepository.save(bookCategory2);
 
-        List<BookCategoryResponse> bookCategoryIds = bookCategoryRepository.findBookCategoryIds(List.of(1L,2L));
+        List<BookWithCategory> bookCategoryIds = bookCategoryRepository.findBookCategoryIds(List.of(1L,2L));
         Assertions.assertThat(bookCategoryIds).hasSize(3);
     }
 

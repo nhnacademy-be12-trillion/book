@@ -1,7 +1,9 @@
 package com.nhnacademy.book.controller;
 
 import com.nhnacademy.book.dto.category.BookCategoryResponse;
+import com.nhnacademy.book.dto.category.BookWithCategory;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
+import com.nhnacademy.book.entity.BookCategory;
 import com.nhnacademy.book.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +24,7 @@ public class CategoryController {
         return ResponseEntity.ok(responses);
     }
     @GetMapping(params = "bookIds")
-    public List<BookCategoryResponse> getBookCategories(List<Long> bookIds) {
-        return categoryService.getCategoryIds(bookIds);
+    public List<BookCategoryResponse> getBookCategories(@RequestParam List<Long> bookIds) {
+        return BookCategoryResponse.of(categoryService.getCategoryIds(bookIds));
     }
-
 }
