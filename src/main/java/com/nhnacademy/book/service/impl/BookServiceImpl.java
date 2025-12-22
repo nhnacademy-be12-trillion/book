@@ -311,4 +311,14 @@ public class BookServiceImpl implements BookService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookListResponse> getBooksByCategoryPage(Long categoryId, Pageable pageable) {
+        // [수정됨] 엔티티 필드명(bookCategories)에 맞춘 리포지토리 메서드 호출
+        Page<Book> books = bookRepository.findByBookCategories_Category_CategoryId(categoryId, pageable);
+
+        // Entity -> DTO 변환
+        return books.map(BookListResponse::from);
+    }
 }

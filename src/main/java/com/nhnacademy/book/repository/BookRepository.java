@@ -57,4 +57,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     void increaseStock(@Param("bookId") Long bookId, @Param("quantity") int quantity);
 
     boolean existsBookByIsbn (String isbn);
+
+    // 카테고리 ID로 도서 목록 페이징 조회 (JPA 메서드 네이밍 규칙 활용)
+// Book 엔티티 안에 'categories'라는 필드가 있다고 가정했습니다.
+    Page<Book> findByBookCategories_Category_CategoryId(Long categoryId, Pageable pageable);
 }
