@@ -48,4 +48,6 @@ public interface BookService {
 
     //
     List<CategoryTreeResponse> getRootCategories();
-}
+
+    //카테고리별 도서 페이저블 조회
+    Page<BookListResponse> getBooksByCategoryPage(Long categoryId, Pageable pageable);}

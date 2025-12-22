@@ -20,16 +20,25 @@ public record BookListResponse(
         List<String> bookTags
 ) {
 
+    // [★추가됨] Service에서 books.map(BookListResponse::from)으로 호출할 때 사용되는 메서드
+    // 이미지가 아직 준비되지 않았거나 필요 없는 경우를 위해 null을 넣어 호출합니다.
+    public static BookListResponse from(Book book) {
+        return from(book, null);
+    }
+
+    // 기존 메서드 (이미지 URL 포함)
     public static BookListResponse from(Book book, String imageUrl) {
+        // 1. 작가 목록 변환
         String authors = book.getBookAuthors().stream()
                 .map(ba -> ba.getAuthor().getAuthorName())
                 .collect(Collectors.joining(", "));
 
+        // 2. 태그 목록 변환
         List<String> tagList = book.getBookTags().stream()
                 .map(bookTag -> bookTag.getTag().getTagName())
                 .collect(Collectors.toList());
 
-        // 할인율 = (정가 - 판매가) / 정가 * 100
+        // 3. 할인율 계산
         int discountRate = 0;
         if (book.getBookRegularPrice() > 0) { // 0으로 나누기 방지
             discountRate = (int) Math.round(
@@ -37,6 +46,7 @@ public record BookListResponse(
                             / book.getBookRegularPrice() * 100
             );
         }
+
         return new BookListResponse(
                 book.getBookId(),
                 book.getBookName(),
@@ -47,7 +57,7 @@ public record BookListResponse(
                 book.getBookSalePrice(),
                 discountRate,
                 book.getBookReviewRate(),
-                imageUrl, // 여기서 DB가 아닌, 파라미터로 받은 URL을 넣음
+                imageUrl, // Service에서 이미지를 조회해서 넣을 경우 사용, 없으면 null
                 tagList
         );
     }
