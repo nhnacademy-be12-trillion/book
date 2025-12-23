@@ -23,7 +23,7 @@ public class BookController {
     private final BookService bookService;
     private final OrderClient orderClient;
 
-    // 1. 도서 전체 목록 조회 (페이징)
+    // 도서 전체 목록 조회
     // GET /books?page=0&size=20
     @GetMapping
     public ResponseEntity<Page<BookListResponse>> getBooks(
@@ -32,7 +32,7 @@ public class BookController {
         return ResponseEntity.ok(bookService.getBooks(pageable));
     }
 
-    // 2. 도서 상세 조회
+    // 도서 상세 조회
     // GET /books/{book-id}
     @GetMapping("/{book-id}")
     public ResponseEntity<BookDetailResponse> getBook(@PathVariable("book-id") Long bookId) {
@@ -45,7 +45,7 @@ public class BookController {
     }
 
 
-    // 3. 베스트셀러 조회
+    // 베스트셀러 조회
     // GET /books/best-sellers
     @GetMapping("/best-sellers")
     public ResponseEntity<List<BookListResponse>> getBestSellers() {
@@ -54,21 +54,26 @@ public class BookController {
         return ResponseEntity.ok(bestSellers);
     }
 
-    // 4. 인기 도서 조회
+    // 인기 도서 조회
     // GET /books/popular-books
     @GetMapping("/popular-books")
     public ResponseEntity<List<BookListResponse>> getPopularBooks() {
         return ResponseEntity.ok(bookService.getPopularBooks());
     }
+    // 전체 신간 도서 Top 5 조회
+    @GetMapping("/new-books")
+    public ResponseEntity<List<BookListResponse>> getNewBooks() {
+        return ResponseEntity.ok(bookService.getNewBooks());
+    }
 
-    // 5. [메인페이지용] 카테고리별 신간 Top 5 조회 (기존 메서드 유지)
+    // 카테고리별 신간 Top 5 조회
     // GET /books/categories/{category-id}/top
     @GetMapping("/categories/{category-id}/top")
     public ResponseEntity<List<BookListResponse>> getBooksByCategory(@PathVariable("category-id") Long categoryId) {
         return ResponseEntity.ok(bookService.getBooksByCategory(categoryId));
     }
 
-    // 6. [★새로 추가] 카테고리별 도서 전체 목록 조회 (페이징 적용)
+    // 카테고리별 도서 전체 목록 조회
     // GET /books/categories/{category-id}?page=0&size=20
     @GetMapping("/categories/{category-id}")
     public ResponseEntity<Page<BookListResponse>> getBooksByCategoryPage(
@@ -78,7 +83,7 @@ public class BookController {
         return ResponseEntity.ok(bookService.getBooksByCategoryPage(categoryId, pageable));
     }
 
-    // 7. 최상위 카테고리 목록 조회
+    // 최상위 카테고리 목록 조회
     @GetMapping("/categories/roots")
     public ResponseEntity<List<CategoryTreeResponse>> getRootCategories() {
         return ResponseEntity.ok(bookService.getRootCategories());

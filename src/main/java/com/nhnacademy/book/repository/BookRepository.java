@@ -20,15 +20,17 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query("SELECT b, f.fileUrl " +
             "FROM Book b " +
-            "LEFT JOIN FETCH b.publisher " +   // 출판사: 매핑되어 있으니 'FETCH'로 성능 최적화 (N+1 방지)
-            "LEFT JOIN BookFile f ON b.bookId = f.joinedId AND f.fileType = :fileType") //  이미지: 매핑 없으니 직접 'ON'으로 조인
+            "LEFT JOIN FETCH b.publisher " +   // 출판사 Fetch Join (N+1 방지)
+            "LEFT JOIN BookFile f ON b.bookId = f.joinedId AND f.fileType = :fileType") // 이미지 Join
     Page<Object[]> findAllBooksWithImage(Pageable pageable, @Param("fileType") FileType fileType);
 
-    // [지금 많이 보는 도서] 조회수 높은 순으로 상위 5개 (LIMIT 5)
-    List<Book> findTop5ByOrderByViewCountDesc();
+    // [지금 많이 보는 도서] 조회수 높은 순으로 상위 10개
+    List<Book> findTop10ByOrderByViewCountDesc();
 
-    // 카테고리별 신간] 특정 카테고리 + 최신순 + 5개 제한
-    // (Pageable을 넘겨서 LIMIT을 건다)
+    // 전체 신간 도서 Top 5 (출판일 내림차순, 동률 시 ID 내림차순)
+    List<Book> findTop5ByOrderByBookPublicationDateDescBookIdDesc();
+
+    // [카테고리별 신간] 특정 카테고리 + 최신순 + 5개 제한 (Pageable로 LIMIT 적용)
     @Query("SELECT b FROM Book b JOIN b.bookCategories bc " +
             "WHERE bc.category.categoryId = :categoryId " +
             "ORDER BY b.bookPublicationDate DESC")
@@ -56,9 +58,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Query("UPDATE Book b SET b.bookStock = b.bookStock + :quantity WHERE b.bookId = :bookId")
     void increaseStock(@Param("bookId") Long bookId, @Param("quantity") int quantity);
 
-    boolean existsBookByIsbn (String isbn);
+    boolean existsBookByIsbn(String isbn);
 
     // 카테고리 ID로 도서 목록 페이징 조회 (JPA 메서드 네이밍 규칙 활용)
-// Book 엔티티 안에 'categories'라는 필드가 있다고 가정했습니다.
     Page<Book> findByBookCategories_Category_CategoryId(Long categoryId, Pageable pageable);
 }

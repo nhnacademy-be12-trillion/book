@@ -14,10 +14,7 @@ import com.nhnacademy.book.service.BookService;
 import com.nhnacademy.book.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -76,7 +73,7 @@ public class BookServiceImpl implements BookService {
                 .map(bookMap::get)            // Map에서 꺼냄
                 .collect(Collectors.toList());
 
-        //뎌 DTO로 변환해서 반환 (이미지 처리 포함된 기존 메서드 활용)
+        // DTO로 변환해서 반환 (이미지 처리 포함된 기존 메서드 활용)
         return convertToDtoList(sortedBooks);
     }
 
@@ -84,7 +81,15 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public List<BookListResponse> getPopularBooks() {
-        List<Book> books = bookRepository.findTop5ByOrderByViewCountDesc();
+        List<Book> books = bookRepository.findTop10ByOrderByViewCountDesc();
+        return convertToDtoList(books);
+    }
+
+    // 전체 신간 도서 Top 5 조회
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookListResponse> getNewBooks() {
+        List<Book> books = bookRepository.findTop5ByOrderByBookPublicationDateDescBookIdDesc();
         return convertToDtoList(books);
     }
 
@@ -92,9 +97,9 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public List<BookListResponse> getBooksByCategory(Long categoryId) {
-        // 0페이지에서 5개만 가져오라 (LIMIT 5 효과)
-        Pageable limitFive = PageRequest.of(0, 5);
-        List<Book> books = bookRepository.findBooksByCategoryId(categoryId, limitFive);
+        // 0페이지에서 5개 가져오기 + 출판일 내림차순 정렬 명시
+        Pageable limitFiveSorted = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "bookPublicationDate"));
+        List<Book> books = bookRepository.findBooksByCategoryId(categoryId, limitFiveSorted);
         return convertToDtoList(books);
     }
 
@@ -216,6 +221,7 @@ public class BookServiceImpl implements BookService {
         book.markAsSoldOut();
     }
 
+    // 조회수 증가
     @Override
     @Transactional
     public void increaseViewCount(Long bookId) {
@@ -316,14 +322,13 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public Page<BookListResponse> getBooksByCategoryPage(Long categoryId, Pageable pageable) {
-        // 1. 카테고리에 해당하는 책들을 페이징하여 조회
+        // 카테고리에 해당하는 책들을 페이징하여 조회
         Page<Book> bookPage = bookRepository.findByBookCategories_Category_CategoryId(categoryId, pageable);
 
-        // 2. 조회된 책 리스트(Content)를 꺼내서 이미지가 포함된 DTO 리스트로 변환
-        // (이미 만들어두신 convertToDtoList 메서드 활용)
+        // 조회된 책 리스트(Content)를 꺼내서 이미지가 포함된 DTO 리스트로 변환
         List<BookListResponse> bookListResponses = convertToDtoList(bookPage.getContent());
 
-        // 3. 변환된 리스트와 페이징 정보를 이용해 새로운 Page 객체 생성하여 반환
+        // 변환된 리스트와 페이징 정보를 이용해 새로운 Page 객체 생성하여 반환
         return new PageImpl<>(bookListResponses, pageable, bookPage.getTotalElements());
     }
 }

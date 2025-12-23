@@ -22,6 +22,9 @@ public interface BookService {
     // [지금 많이 보는 도서] 5개 조회
     List<BookListResponse> getPopularBooks();
 
+    // 전체 신간 도서 Top 5 조회
+    List<BookListResponse> getNewBooks();
+
     // 카테고리별 신간 5개 조회
     List<BookListResponse> getBooksByCategory(Long categoryId);
 
