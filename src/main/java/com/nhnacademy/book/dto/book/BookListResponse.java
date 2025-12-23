@@ -20,8 +20,6 @@ public record BookListResponse(
         List<String> bookTags
 ) {
 
-    // [★추가됨] Service에서 books.map(BookListResponse::from)으로 호출할 때 사용되는 메서드
-    // 이미지가 아직 준비되지 않았거나 필요 없는 경우를 위해 null을 넣어 호출합니다.
     public static BookListResponse from(Book book) {
         return from(book, null);
     }

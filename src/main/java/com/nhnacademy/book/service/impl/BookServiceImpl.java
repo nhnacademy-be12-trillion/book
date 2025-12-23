@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
-
     private final FileService fileService;
     private final BookFileRepository fileRepository;
     private final MinioService minioService;
@@ -39,13 +38,10 @@ public class BookServiceImpl implements BookService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
 
-    // 도서 목록 조회
     @Override
     @Transactional(readOnly = true)
     public Page<BookListResponse> getBooks(Pageable pageable) {
-        // Object 타입은 어떤 걸 가져오는지 너무 불명확함 수정 필요
         Page<Object[]> results = bookRepository.findAllBooksWithImage(pageable, FileType.BOOK);
-
         return results.map(row -> {
             Book book = (Book) row[0];
             String imageUrl = (String) row[1];
@@ -56,28 +52,13 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public List<BookListResponse> getBooksByIds(List<Long> bookIds) {
-        if (bookIds == null || bookIds.isEmpty()) {
-            return List.of();
-        }
-
-        // DB에서 일단 다 가져옴 (순서는 보장 안 됨)
+        if (bookIds == null || bookIds.isEmpty()) return List.of();
         List<Book> books = bookRepository.findAllById(bookIds);
-
-        // 가져온 책들을 ID 기준으로 Map에 담음 (빠르게 찾기 위해)
-        Map<Long, Book> bookMap = books.stream()
-                .collect(Collectors.toMap(Book::getBookId, book -> book));
-
-        // 원래 요청받은 ID 순서(랭킹)대로 리스트를 다시 만듦
-        List<Book> sortedBooks = bookIds.stream()
-                .filter(bookMap::containsKey) // DB에 있는 것만
-                .map(bookMap::get)            // Map에서 꺼냄
-                .collect(Collectors.toList());
-
-        // DTO로 변환해서 반환 (이미지 처리 포함된 기존 메서드 활용)
+        Map<Long, Book> bookMap = books.stream().collect(Collectors.toMap(Book::getBookId, book -> book));
+        List<Book> sortedBooks = bookIds.stream().filter(bookMap::containsKey).map(bookMap::get).collect(Collectors.toList());
         return convertToDtoList(sortedBooks);
     }
 
-    // 조회수 많은 도서 5개 조회
     @Override
     @Transactional(readOnly = true)
     public List<BookListResponse> getPopularBooks() {
@@ -85,69 +66,48 @@ public class BookServiceImpl implements BookService {
         return convertToDtoList(books);
     }
 
-    // 전체 신간 도서 Top 5 조회
     @Override
     @Transactional(readOnly = true)
     public List<BookListResponse> getNewBooks() {
-        List<Book> books = bookRepository.findTop5ByOrderByBookPublicationDateDescBookIdDesc();
-        return convertToDtoList(books);
+        // 전체 신간 Top 5
+        Page<Book> booksPage = bookRepository.findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "bookPublicationDate")));
+        return convertToDtoList(booksPage.getContent());
     }
 
-    // 카테고리별 신간 5개 조회
     @Override
     @Transactional(readOnly = true)
     public List<BookListResponse> getBooksByCategory(Long categoryId) {
-        // 0페이지에서 5개 가져오기 + 출판일 내림차순 정렬 명시
-        Pageable limitFiveSorted = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "bookPublicationDate"));
-        List<Book> books = bookRepository.findBooksByCategoryId(categoryId, limitFiveSorted);
+        // [★필수] 카테고리별 신간 Top 5 구현
+        Pageable limitFive = PageRequest.of(0, 5);
+        List<Book> books = bookRepository.findBooksByCategoryId(categoryId, limitFive);
         return convertToDtoList(books);
     }
 
-    // 도서 상세 조회
     @Override
     @Transactional(readOnly = true)
     public BookDetailResponse getBook(Long bookId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException("해당 도서가 존재하지 않습니다. ID: " + bookId));
-
-        String imageUrl = fileRepository.findFirstByJoinedIdAndFileType(bookId,FileType.BOOK)
-                .map(BookFile::getFileUrl)
-                .orElse(null);
-
+        String imageUrl = fileRepository.findFirstByJoinedIdAndFileType(bookId, FileType.BOOK)
+                .map(BookFile::getFileUrl).orElse(null);
         return BookDetailResponse.from(book, imageUrl);
     }
 
-    // 도서 등록 (Builder 적용)
+    // ... (create, update, delete 메서드는 기존 코드 유지) ...
     @Override
     @Transactional
     public Long createBook(BookCreateRequest request, MultipartFile file) {
-
-        if(bookRepository.existsBookByIsbn(request.isbn())){
-            throw new AlreadyEnrolledException("이미 등록된 도서입니다.");
-        }
-
-        // 이미지 업로드 처리
+        if(bookRepository.existsBookByIsbn(request.isbn())){ throw new AlreadyEnrolledException("이미 등록된 도서입니다."); }
         String uploadUrl = null;
-        if (file != null && !file.isEmpty()) {
-            log.info("파일 업로드 감지: MinIO로 직접 업로드 시도");
-            uploadUrl = minioService.uploadImage(file);
-        } else if (request.bookImage() != null && !request.bookImage().isBlank()) {
-            log.info("이미지 URL 감지: 서버에서 다운로드 및 업로드 시도 -> {}", request.bookImage());
-            uploadUrl = minioService.uploadFromUrl(request.bookImage());
-        }
+        if (file != null && !file.isEmpty()) { uploadUrl = minioService.uploadImage(file); }
+        else if (request.bookImage() != null && !request.bookImage().isBlank()) { uploadUrl = minioService.uploadFromUrl(request.bookImage()); }
 
-        // 출판사 처리
         Publisher publisher = null;
         if (request.bookPublisher() != null && !request.bookPublisher().isBlank()) {
             String publisherName = request.bookPublisher().trim();
-            publisher = publisherRepository.findByPublisherName(publisherName)
-                    .orElseGet(() -> {
-                        log.info("새로운 출판사 생성: '{}'", publisherName);
-                        return publisherRepository.save(new Publisher(publisherName));
-                    });
+            publisher = publisherRepository.findByPublisherName(publisherName).orElseGet(() -> publisherRepository.save(new Publisher(publisherName)));
         }
 
-        // Builder로 Book 객체 생성
         Book book = Book.builder()
                 .isbn(request.isbn())
                 .bookName(request.bookName())
@@ -160,81 +120,44 @@ public class BookServiceImpl implements BookService {
                 .bookRegularPrice(request.bookRegularPrice())
                 .bookSalePrice(request.bookSalePrice())
                 .bookReviewRate(0.0)
-                .publisher(publisher) // 찾은 출판사 바로 주입
+                .publisher(publisher)
                 .build();
 
-        // 작가, 태그, 카테고리 처리 (Getter로 컬렉션 가져와서 add)
         processAuthors(book, request.bookAuthor());
         processTags(book, request.tags());
         processCategories(book, request.categoryIdList());
 
-        // 책 저장
         Book savedBook = bookRepository.save(book);
-
-        // 이미지 저장 (BookFile 테이블 사용)
         String finalImageUrl = (uploadUrl != null) ? uploadUrl : request.bookImage();
-        if (finalImageUrl != null && !finalImageUrl.isBlank()) {
-            fileService.saveBookImage(savedBook.getBookId(), finalImageUrl);
-        }
-
-        log.info("도서 등록 완료 ID: {}, 제목: {}", savedBook.getBookId(), savedBook.getBookName());
+        if (finalImageUrl != null && !finalImageUrl.isBlank()) { fileService.saveBookImage(savedBook.getBookId(), finalImageUrl); }
         return savedBook.getBookId();
     }
 
-    // 도서 수정
     @Override
     @Transactional
     public void updateBook(Long bookId, BookUpdateRequest request) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new BookNotFoundException("수정할 도서가 없습니다. ID: " + bookId));
-
+        Book book = bookRepository.findById(bookId).orElseThrow(() -> new BookNotFoundException("수정할 도서가 없습니다. ID: " + bookId));
         int newSalePrice = calculateSalePrice(book.getBookRegularPrice(), request.discountRate());
-
-        book.updateBookInfo(
-                request.bookName(),
-                request.bookDescription(),
-                request.bookIndex(),
-                request.bookPackaging(),
-                request.bookState(),
-                request.bookStock(),
-                newSalePrice
-        );
-
-        // 이미지 수정 (BookFile 업데이트)
+        book.updateBookInfo(request.bookName(), request.bookDescription(), request.bookIndex(), request.bookPackaging(), request.bookState(), request.bookStock(), newSalePrice);
         if (request.bookImage() != null && !request.bookImage().isBlank()) {
-            Optional<BookFile> existingFile = fileRepository.findFirstByJoinedIdAndFileType(bookId,FileType.BOOK);
-            if (existingFile.isPresent()) {
-                existingFile.get().setFileUrl(request.bookImage());
-            } else {
-                fileService.saveBookImage(bookId, request.bookImage());
-            }
+            Optional<BookFile> existingFile = fileRepository.findFirstByJoinedIdAndFileType(bookId, FileType.BOOK);
+            if (existingFile.isPresent()) { existingFile.get().setFileUrl(request.bookImage()); }
+            else { fileService.saveBookImage(bookId, request.bookImage()); }
         }
     }
 
-    // 도서 삭제
     @Override
     @Transactional
     public void deleteBook(Long bookId) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new BookNotFoundException("삭제할 도서가 없습니다. ID: " + bookId));
-
+        Book book = bookRepository.findById(bookId).orElseThrow(() -> new BookNotFoundException("삭제할 도서가 없습니다. ID: " + bookId));
         book.markAsSoldOut();
     }
 
-    // 조회수 증가
     @Override
     @Transactional
     public void increaseViewCount(Long bookId) {
         bookRepository.updateViewCount(bookId);
     }
-
-//    @Override
-//    @Transactional
-//    public void deductStock(Long bookId, int quantity) {
-//        Book book = bookRepository.findById(bookId)
-//                .orElseThrow(() -> new BookNotFoundException("해당 도서를 찾을 수 없습니다."));
-//        book.deductStock(quantity);
-//    }
 
     @Override
     public int calculateSalePrice(int regularPrice, double discountRate) {
@@ -242,37 +165,19 @@ public class BookServiceImpl implements BookService {
     }
 
     private List<BookListResponse> convertToDtoList(List<Book> books) {
-        if (books.isEmpty())
-            return List.of();
-
-        // 책 ID 추출
+        if (books.isEmpty()) return List.of();
         List<Long> bookIds = books.stream().map(Book::getBookId).toList();
-
-        // 이미지 일괄 조회 (IN 쿼리)
         List<BookFile> images = fileRepository.findAllByJoinedIdInAndFileType(bookIds, FileType.BOOK);
-
-        // Map 변환 (BookId -> ImageUrl)
-        Map<Long, String> imageMap = images.stream()
-                .collect(Collectors.toMap(
-                        BookFile::getJoinedId,
-                        BookFile::getFileUrl,
-                        (oldVal, newVal) -> oldVal // 중복 시 기존 것 유지
-                ));
-
-        // DTO 변환
-        return books.stream()
-                .map(book -> BookListResponse.from(book, imageMap.get(book.getBookId())))
-                .collect(Collectors.toList());
+        Map<Long, String> imageMap = images.stream().collect(Collectors.toMap(BookFile::getJoinedId, BookFile::getFileUrl, (oldVal, newVal) -> oldVal));
+        return books.stream().map(book -> BookListResponse.from(book, imageMap.get(book.getBookId()))).collect(Collectors.toList());
     }
 
-    // --- Helper Methods ---
     private void processAuthors(Book book, String authorStr) {
         if (authorStr != null && !authorStr.isBlank()) {
             for (String name : authorStr.split(",")) {
                 String cleanName = name.replaceAll("\\(.*?\\)", "").trim();
                 if (!cleanName.isEmpty()) {
-                    Author author = authorRepository.findByAuthorName(cleanName)
-                            .orElseGet(() -> authorRepository.save(new Author(cleanName)));
+                    Author author = authorRepository.findByAuthorName(cleanName).orElseGet(() -> authorRepository.save(new Author(cleanName)));
                     book.getBookAuthors().add(new BookAuthor(author, book));
                 }
             }
@@ -284,8 +189,7 @@ public class BookServiceImpl implements BookService {
             for (String name : tagStr.split(",")) {
                 String cleanTagName = name.trim();
                 if (!cleanTagName.isEmpty()) {
-                    Tag tag = tagRepository.findByTagName(cleanTagName)
-                            .orElseGet(() -> tagRepository.save(new Tag(cleanTagName)));
+                    Tag tag = tagRepository.findByTagName(cleanTagName).orElseGet(() -> tagRepository.save(new Tag(cleanTagName)));
                     book.getBookTags().add(new BookTag(tag, book));
                 }
             }
@@ -295,40 +199,23 @@ public class BookServiceImpl implements BookService {
     private void processCategories(Book book, java.util.List<Long> categoryIds) {
         if (categoryIds != null && !categoryIds.isEmpty()) {
             for (Long catId : categoryIds) {
-                Category category = categoryRepository.findById(catId)
-                        .orElseThrow(() -> new CategoryNotFoundException("존재하지 않는 카테고리 ID: " + catId));
+                Category category = categoryRepository.findById(catId).orElseThrow(() -> new CategoryNotFoundException("존재하지 않는 카테고리 ID: " + catId));
                 book.getBookCategories().add(new BookCategory(category, book));
             }
         }
     }
 
-    // 1차 카테고리만 반환하도록 매핑 로직 수정
     @Override
     @Transactional(readOnly = true)
     public List<CategoryTreeResponse> getRootCategories() {
-        // parent가 없는 최상위 카테고리만 조회
         List<Category> rootCategories = categoryRepository.findAllByParentIsNull();
-
-        // Entity -> DTO 변환 (CategoryTreeResponse 생성자 호출)
-        return rootCategories.stream()
-                .map(category -> new CategoryTreeResponse(
-                        category.getCategoryId(),
-                        category.getCategoryName(),
-                        List.of() // 메인 페이지 버튼용
-                ))
-                .collect(Collectors.toList());
+        return rootCategories.stream().map(category -> new CategoryTreeResponse(category.getCategoryId(), category.getCategoryName(), List.of())).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<BookListResponse> getBooksByCategoryPage(Long categoryId, Pageable pageable) {
-        // 카테고리에 해당하는 책들을 페이징하여 조회
-        Page<Book> bookPage = bookRepository.findByBookCategories_Category_CategoryId(categoryId, pageable);
-
-        // 조회된 책 리스트(Content)를 꺼내서 이미지가 포함된 DTO 리스트로 변환
-        List<BookListResponse> bookListResponses = convertToDtoList(bookPage.getContent());
-
-        // 변환된 리스트와 페이징 정보를 이용해 새로운 Page 객체 생성하여 반환
-        return new PageImpl<>(bookListResponses, pageable, bookPage.getTotalElements());
+        Page<Book> books = bookRepository.findByBookCategories_Category_CategoryId(categoryId, pageable);
+        return books.map(BookListResponse::from);
     }
 }

@@ -23,30 +23,23 @@ public class BookController {
     private final BookService bookService;
     private final OrderClient orderClient;
 
-    // 도서 전체 목록 조회
-    // GET /books?page=0&size=20
     @GetMapping
     public ResponseEntity<Page<BookListResponse>> getBooks(
             @PageableDefault(page = 0, size = 20, sort = "bookId", direction = Sort.Direction.DESC) Pageable pageable) {
-
         return ResponseEntity.ok(bookService.getBooks(pageable));
     }
 
-    // 도서 상세 조회
-    // GET /books/{book-id}
     @GetMapping("/{book-id}")
     public ResponseEntity<BookDetailResponse> getBook(@PathVariable("book-id") Long bookId) {
         bookService.increaseViewCount(bookId);
         return ResponseEntity.ok(bookService.getBook(bookId));
     }
+
     @GetMapping(params = "bookOrders")
-    public List<BookListResponse> getBooks(@RequestParam List<Long> bookIds,@RequestParam List<Long> quantities) {
-        return bookService.getBooksByIds(bookIds);
+    public ResponseEntity<List<BookListResponse>> getBooksForOrder(@RequestParam List<Long> bookIds, @RequestParam List<Long> quantities) {
+        return ResponseEntity.ok(bookService.getBooksByIds(bookIds));
     }
 
-
-    // 베스트셀러 조회
-    // GET /books/best-sellers
     @GetMapping("/best-sellers")
     public ResponseEntity<List<BookListResponse>> getBestSellers() {
         List<Long> bookIds = orderClient.getTopSellingBookIds(5);
@@ -54,36 +47,30 @@ public class BookController {
         return ResponseEntity.ok(bestSellers);
     }
 
-    // 인기 도서 조회
-    // GET /books/popular-books
     @GetMapping("/popular-books")
     public ResponseEntity<List<BookListResponse>> getPopularBooks() {
         return ResponseEntity.ok(bookService.getPopularBooks());
     }
-    // 전체 신간 도서 Top 5 조회
+
+    // [★필수] 전체 신간 도서 Top 5 조회
     @GetMapping("/new-books")
     public ResponseEntity<List<BookListResponse>> getNewBooks() {
         return ResponseEntity.ok(bookService.getNewBooks());
     }
 
-    // 카테고리별 신간 Top 5 조회
-    // GET /books/categories/{category-id}/top
+    // [★필수] 카테고리별 신간 Top 5 조회 (이게 있어야 404가 안 뜸)
     @GetMapping("/categories/{category-id}/top")
     public ResponseEntity<List<BookListResponse>> getBooksByCategory(@PathVariable("category-id") Long categoryId) {
         return ResponseEntity.ok(bookService.getBooksByCategory(categoryId));
     }
 
-    // 카테고리별 도서 전체 목록 조회
-    // GET /books/categories/{category-id}?page=0&size=20
     @GetMapping("/categories/{category-id}")
     public ResponseEntity<Page<BookListResponse>> getBooksByCategoryPage(
             @PathVariable("category-id") Long categoryId,
             @PageableDefault(page = 0, size = 20, sort = "bookId", direction = Sort.Direction.DESC) Pageable pageable) {
-
         return ResponseEntity.ok(bookService.getBooksByCategoryPage(categoryId, pageable));
     }
 
-    // 최상위 카테고리 목록 조회
     @GetMapping("/categories/roots")
     public ResponseEntity<List<CategoryTreeResponse>> getRootCategories() {
         return ResponseEntity.ok(bookService.getRootCategories());
