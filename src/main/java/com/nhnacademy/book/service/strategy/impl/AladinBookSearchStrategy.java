@@ -37,7 +37,7 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
 
     private AladinResponse.Item fetchAladinData(String isbn) {
         URI uri = UriComponentsBuilder
-                .fromHttpUrl("http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
+                .fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
                 .queryParam("ttbkey", ttbKey)
                 .queryParam("itemIdType", "ISBN13")
                 .queryParam("ItemId", isbn)
