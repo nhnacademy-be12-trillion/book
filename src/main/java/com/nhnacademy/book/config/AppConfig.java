@@ -10,14 +10,14 @@ public class AppConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        // 1. 요청 팩토리 생성
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 
-        // 2. 타임아웃 설정 (5초) - 밀리초 단위
+        // 연결 타임아웃은 5초면 충분합니다.
         factory.setConnectTimeout(5000);
-        factory.setReadTimeout(5000);
 
-        // 3. 팩토리를 넣어서 RestTemplate 생성
+        // [수정] AI 응답 대기 시간을 위해 읽기 타임아웃을 30초(30000ms)로 늘립니다.
+        factory.setReadTimeout(30000);
+
         return new RestTemplate(factory);
     }
 }
