@@ -10,6 +10,10 @@ import com.nhnacademy.book.service.strategy.BookSearchStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -36,6 +40,7 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
     }
 
     private AladinResponse.Item fetchAladinData(String isbn) {
+        // 1. URI 생성 (HTTPS 사용)
         URI uri = UriComponentsBuilder
                 .fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
                 .queryParam("ttbkey", ttbKey)
@@ -48,9 +53,23 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
                 .toUri();
 
         try {
-            AladinResponse response = restTemplate.getForObject(uri, AladinResponse.class);
+            // [수정된 부분] 헤더(User-Agent) 추가하여 봇 차단 우회
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
-            // 1. 결과가 없으면 우리가 만든 커스텀 예외 발생 (404용)
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // exchange 메서드로 요청 전송
+            ResponseEntity<AladinResponse> responseEntity = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    AladinResponse.class
+            );
+
+            AladinResponse response = responseEntity.getBody();
+
+            // 2. 결과가 없으면 우리가 만든 커스텀 예외 발생 (404용)
             if (response == null || response.item() == null || response.item().isEmpty()) {
                 throw new BookNotFoundException(isbn);
             }
