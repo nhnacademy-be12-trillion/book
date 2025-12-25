@@ -23,13 +23,12 @@ public class Wishlist {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
 
-    public static Wishlist create(Member member, Book book) {
+    public static Wishlist create(Long memberId, Book book) {
         return Wishlist.builder()
-                .member(member)
+                .memberId(memberId)
                 .book(book)
                 .build();
     }

@@ -1,17 +1,17 @@
-spring:
-  application:
-    name: book-service
-  config:
-    import: configserver:${CONFIG_SERVER_URI:http://localhost:10418}
-  cloud:
-    config:
-      username: be12-team1
-      password: nhnacademy123!
-
-# 유레카 서버 안킬거면 해당 설정 비활성화 해야 함
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: ${EUREKA_URL}
+#spring:
+#  application:
+#    name: book-service
+#  config:
+#    import: configserver:${CONFIG_SERVER_URI:http://localhost:10418}
+#  cloud:
+#    config:
+#      username: be12-team1
+#      password: nhnacademy123!
+#
+## 유레카 서버 안킬거면 해당 설정 비활성화 해야 함
+#eureka:
+#  client:
+#    register-with-eureka: true
+#    fetch-registry: true
+#    service-url:
+#      defaultZone: ${EUREKA_URL}

@@ -7,7 +7,6 @@ import com.nhnacademy.book.entity.*;
 import com.nhnacademy.book.exception.*;
 import com.nhnacademy.book.repository.BookFileRepository;
 import com.nhnacademy.book.repository.BookRepository;
-import com.nhnacademy.book.repository.MemberRepository;
 import com.nhnacademy.book.repository.ReviewRepository;
 import com.nhnacademy.book.service.FileService;
 import com.nhnacademy.book.service.ReviewService;
@@ -32,7 +31,6 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final BookRepository bookRepository;
-    private final MemberRepository memberRepository;
     private final BookFileRepository bookFileRepository;
     private final MinioService minioService;
     private final FileService fileService;
@@ -46,16 +44,10 @@ public class ReviewServiceImpl implements ReviewService {
         Book book = bookRepository.findById(request.bookId())
                 .orElseThrow(() -> new BookNotFoundException("존재하지 않는 도서입니다."));
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException("존재하지 않는 회원입니다."));
-
-
-        // TODO: [비즈니스 검증] 사용자가 이 책을 구매했는지 확인하는 로직 추가
-
         // Review 엔티티 생성
         Review review = Review.builder()
                 .book(book)
-                .member(member)
+                .memberId(memberId)
                 .reviewRate(request.reviewRate())
                 .reviewContents(request.reviewContents())
                 .createdAt(LocalDateTime.now())
@@ -67,12 +59,12 @@ public class ReviewServiceImpl implements ReviewService {
             List<String> imageUrls = new ArrayList<>();
             for (MultipartFile image : images) {
                 if (!image.isEmpty()) {
-                    // (1) MinIO에 업로드하고 URL 받기
+                    // MinIO에 업로드하고 URL 받기
                     String imageUrl = minioService.uploadImage(image);
                     imageUrls.add(imageUrl);
                 }
             }
-            // (2) BookFile 테이블에 저장 (FileType.REVIEW, joinedId = 리뷰ID)
+            // BookFile 테이블에 저장 (FileType.REVIEW, joinedId = 리뷰ID)
             fileService.saveReviewImages(savedReview.getReviewId(),imageUrls);
         }
 
@@ -100,15 +92,14 @@ public class ReviewServiceImpl implements ReviewService {
 
         List<BookFile> fileList = bookFileRepository.findAllByJoinedIdInAndFileType(reviewIds, FileType.REVIEW);
 
-        // 조회한 이미지들을 '리뷰 ID'를 키(Key)로 하는 맵(Map)으로 변환 (메모리 작업)
-        // 구조: Map<리뷰ID, List<이미지URL>>
+        // 조회한 이미지들을 '리뷰 ID'를 Key로 하는 Map으로 변환
+        // Map<리뷰ID, List<이미지URL>>
         Map<Long, List<String>> reviewImageMap = fileList.stream()
                 .collect(Collectors.groupingBy(
                         BookFile::getJoinedId, // Key: 리뷰 ID로 그룹화
                         Collectors.mapping(BookFile::getFileUrl, Collectors.toList()) // Value: URL 리스트로 변환
                 ));
 
-        // 이제 조립만 하면 끝 (DB 조회 없음, 메모리에서 Map.get으로 꺼냄)
         return reviews.map(review -> {
             // 맵에서 내 ID에 맞는 이미지 리스트 꺼내기 (없으면 빈 리스트)
             List<String> imageUrls = reviewImageMap.getOrDefault(review.getReviewId(), Collections.emptyList());
@@ -127,7 +118,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 소유권 검증 로직
         // Gateway ID와 리뷰 작성자 ID가 다르면 권한 없음
-        if (!review.getMember().getMemberId().equals(memberId)) {
+        if (!review.getMemberId().equals(memberId)) {
             // Global Exception Handler가 403을 반환하도록 식별자를 포함한 RuntimeException 사용
             throw new ReviewAccessDeniedException("AUTHORIZATION_FAILURE: 리뷰 수정 권한이 없습니다. (작성자 ID 불일치)");
         }
@@ -160,7 +151,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getReviewsByMemberId(Long memberId, Pageable pageable){
-        Page<Review> reviews = reviewRepository.findAllByMember_MemberId(memberId, pageable);
+        Page<Review> reviews = reviewRepository.findAllByMemberId(memberId, pageable);
 
         // 리뷰가 없으면 빈 페이지 반환
         if (reviews.isEmpty()) {

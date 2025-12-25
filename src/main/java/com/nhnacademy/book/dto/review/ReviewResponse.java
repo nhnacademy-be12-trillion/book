@@ -24,8 +24,16 @@ public record ReviewResponse (
                 review.getReviewRate(),
                 review.getReviewContents(),
                 review.getCreatedAt(),
-                review.getMember().getName(),
+                "작성자",
                 imageUrls
+        );
+    }
+
+    public ReviewResponse withWriterName(String name) {
+        return new ReviewResponse(
+                this.reviewId, this.bookId, this.bookName,
+                this.reviewRate, this.reviewContents,
+                this.createdAt, name, this.imageUrls
         );
     }
 }

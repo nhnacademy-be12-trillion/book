@@ -1,13 +1,11 @@
 package com.nhnacademy.book.service.impl;
 
 import com.nhnacademy.book.dto.book.BookListResponse;
-import com.nhnacademy.book.entity.*; // FileType 등 포함
+import com.nhnacademy.book.entity.*;
 import com.nhnacademy.book.exception.BookNotFoundException;
-import com.nhnacademy.book.exception.MemberNotFoundException;
 import com.nhnacademy.book.exception.WishlistNotFoundException;
-import com.nhnacademy.book.repository.BookFileRepository; // 추가 필요
+import com.nhnacademy.book.repository.BookFileRepository;
 import com.nhnacademy.book.repository.BookRepository;
-import com.nhnacademy.book.repository.MemberRepository;
 import com.nhnacademy.book.repository.WishlistRepository;
 import com.nhnacademy.book.service.WishlistService;
 import lombok.RequiredArgsConstructor;
@@ -25,27 +23,23 @@ public class WishlistServiceImpl implements WishlistService {
 
     private final WishlistRepository wishlistRepository;
     private final BookRepository bookRepository;
-    private final MemberRepository memberRepository;
-    private final BookFileRepository bookFileRepository; // [추가] 이미지 조회를 위해 필요
+    private final BookFileRepository bookFileRepository;
 
     @Override
     public boolean toggleWishlist(Long memberId, Long bookId) {
-        // 회원 조회
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException("회원 정보를 찾을 수 없습니다. ID: " + memberId));
 
         // 도서 조회
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException("도서 정보를 찾을 수 없습니다. ID: " + bookId));
 
         // 중복 확인 및 토글 로직
-        if (wishlistRepository.existsByMemberAndBook(member, book)) {
-            Wishlist wishlist = wishlistRepository.findByMemberAndBook(member, book)
+        if (wishlistRepository.existsByMemberIdAndBook(memberId, book)) {
+            Wishlist wishlist = wishlistRepository.findByMemberIdAndBook(memberId, book)
                     .orElseThrow(() -> new WishlistNotFoundException("데이터 불일치: 찜 내역이 존재해야 합니다."));
             wishlistRepository.delete(wishlist);
             return false; // 찜 취소
         } else {
-            Wishlist newWishlist = Wishlist.create(member, book);
+            Wishlist newWishlist = Wishlist.create(memberId, book);
             wishlistRepository.save(newWishlist);
             return true; // 찜 성공
         }
@@ -55,7 +49,7 @@ public class WishlistServiceImpl implements WishlistService {
     @Transactional(readOnly = true)
     public List<BookListResponse> getWishlist(Long memberId) {
         // 회원의 위시리스트 조회
-        List<Wishlist> wishlists = wishlistRepository.findByMember_MemberId(memberId);
+        List<Wishlist> wishlists = wishlistRepository.findByMemberId(memberId);
 
         if (wishlists.isEmpty()) {
             return List.of();

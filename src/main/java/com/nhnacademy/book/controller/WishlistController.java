@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/wishlists")
+@RequestMapping("/books/wishlists")
 @RequiredArgsConstructor
 public class WishlistController {
 
@@ -23,10 +23,10 @@ public class WishlistController {
      // GET /api/wishlists
     @GetMapping
     public ResponseEntity<List<BookListResponse>> getWishlists(
-            @RequestHeader(name = "X-Member-Id", required = false) Long xUserId) {
+            @RequestHeader(name = "X-Member-Id", required = false) Long memberId) {
 
         // 헤더 값 우선 사용, 없으면 테스트용 1L
-        Long memberId = (xUserId != null) ? xUserId : 1L;
+//        Long memberId = (xUserId != null) ? xUserId : 1L;
         log.info("위시리스트 조회 요청 - Member ID: {}", memberId);
 
         List<BookListResponse> response = wishlistService.getWishlist(memberId);
@@ -38,10 +38,10 @@ public class WishlistController {
     @PostMapping("/{book-id}")
     public ResponseEntity<Map<String, Object>> toggleWishlist(
             @PathVariable("book-id") Long bookId,
-            @RequestHeader(name = "X-Member-Id", required = false) Long xUserId) {
+            @RequestHeader(name = "X-Member-Id") Long memberId) {
 
         // 헤더 값 우선 사용, 없으면 테스트용 1L
-        Long memberId = (xUserId != null) ? xUserId : 1L;
+//        Long memberId = (xUserId != null) ? xUserId : 1L;
         log.info("위시리스트 토글 요청 - Member ID: {}, Book ID: {}", memberId, bookId);
 
         boolean isWished = wishlistService.toggleWishlist(memberId, bookId);
