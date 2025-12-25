@@ -11,6 +11,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException; // [필수] 예외 처리를 위해 임포트
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -27,11 +28,11 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
     @Value("${gemini.api.gemini-key}")
     private String geminiApiKey;
 
-
-    //정보 보강 여부 -> 검색 api에서 가져온 인덱스가 비어있거나 설명이 50글자 이내.
+    // 정보 보강 여부 -> 검색 api에서 가져온 인덱스가 비어있거나 설명이 50글자 이내일 때만 AI 호출
     @Override
     public boolean isApplicable(BookCreateRequest request) {
-        return request.bookIndex().isEmpty() || request.bookDescription().length()<50;
+        // 이미 내용이 충분하다면 굳이 AI를 부르지 않아서 한도를 아낍니다.
+        return request.bookIndex().isEmpty() || request.bookDescription().length() < 50;
     }
 
     @Override
@@ -40,8 +41,7 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // 2. 바디 설정 (Gemini API 스펙에 맞춘 Map 구조)
-        // 구조: { "contents": [{ "parts": [{ "text": "프롬프트..." }] }] }
+        // 바디 설정
         Map<String, Object> requestBody = new HashMap<>();
         String prompt = createPrompt(request);
 
@@ -54,15 +54,21 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
-            // 3. POST 요청
+            // POST 요청
             String rawJsonParams = restTemplate.postForObject(url, entity, String.class);
 
-            // 4. 응답 파싱 및 적용
+            // 응답 파싱 및 적용
             return applyGeminiResponse(request, rawJsonParams);
 
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            // 429 에러(한도 초과)는 시스템 장애가 아님 -> 경고 로그만 남기고 원본 반환
+            log.warn("Gemini API 호출 한도 초과 (429): AI 설명을 건너뛰고 도서 등록을 진행합니다. (잠시 후 다시 시도하세요)");
+            return request; // 원본 데이터 그대로 리턴 -> 도서 등록 성공
+
         } catch (Exception e) {
-            log.error("Gemini 호출 실패 - 원본 데이터만 반환합니다.", e);
-            return request;  // AI 실패 시 원본 그대로 리턴 (장애 전파 방지)
+            // 그 외 알 수 없는 에러는 에러 로그를 남기고 원본 반환
+            log.error("Gemini API 호출 중 예상치 못한 오류 발생 - 원본 데이터로 진행합니다.", e);
+            return request;
         }
     }
 
@@ -85,19 +91,26 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
           "description": "생성된 설명...",
           "index": "1장. 서론\\n2장. ..."
         }
-        """, book.bookName(), "", book.bookPublisher());
-        // *주의: 알라딘 Item에 author가 있다면 그걸 넣는게 제일 좋습니다.
+        """, book.bookName(), book.bookAuthor(), book.bookPublisher());
     }
 
     private BookCreateRequest applyGeminiResponse(BookCreateRequest original, String rawResponse) {
         try {
             // 1. 구글 API 응답에서 'text' 추출
             JsonNode root = objectMapper.readTree(rawResponse);
-            String innerJsonText = root.path("candidates").get(0)
+
+            // 응답 구조가 예상과 다를 경우를 대비한 안전 장치
+            JsonNode candidates = root.path("candidates");
+            if (candidates.isEmpty()) {
+                log.warn("Gemini 응답에 candidates가 없습니다.");
+                return original;
+            }
+
+            String innerJsonText = candidates.get(0)
                     .path("content").path("parts").get(0)
                     .path("text").asText();
 
-            // 코드블럭(```json ... ```)이 섞여 올 경우 제거
+            // 코드블럭(```json ... ```) 제거
             innerJsonText = innerJsonText.replaceAll("```json", "").replaceAll("```", "").trim();
 
             // 2. AI가 만든 JSON을 다시 파싱
@@ -105,17 +118,17 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
             String newDescription = aiData.path("description").asText(original.bookDescription());
             String newIndex = aiData.path("index").asText(original.bookIndex());
 
-            // 3. 최종 병합
+            // 3. 최종 병합 (기존 isPackaging, bookState 유지)
             return new BookCreateRequest(
                     original.isbn(), original.bookName(),
                     newDescription, // AI 설명 적용
-                    original.bookPublisher(), original.bookAuthor(),original.tags(), original.categoryIdList(), original.bookPublicationDate(),
+                    original.bookPublisher(), original.bookAuthor(), original.tags(), original.categoryIdList(), original.bookPublicationDate(),
                     newIndex,       // AI 목차 적용
                     original.bookPackaging(), original.bookState(), original.bookStock(),
                     original.bookRegularPrice(), original.bookSalePrice(), original.bookImage()
             );
         } catch (Exception e) {
-            log.warn("Gemini 응답 파싱 실패", e);
+            log.warn("Gemini 응답 데이터 파싱 실패 - 원본 데이터 사용", e);
             return original;
         }
     }
