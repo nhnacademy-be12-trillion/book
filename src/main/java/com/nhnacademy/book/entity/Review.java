@@ -23,6 +23,11 @@ public class Review {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
+    // 주문당 1개 제한을 위한 주문 번호 필드
+    // unique = true를 걸어서 혹시 모를 중복 저장 막기
+    @Column(name = "order_id", unique = true)
+    private Long orderId;
+
     private int reviewRate;
 
     @Lob

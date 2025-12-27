@@ -20,4 +20,7 @@ public interface ReviewService {
     void updateBookAverageRating(Long bookId); // 평점 업데이트
 
     Page<ReviewResponse> getReviewsByMemberId(Long memberId, Pageable pageable);
+
+    // 주문 ID로 리뷰 존재 여부 확인
+    boolean existsByOrderId(Long orderId);
 }

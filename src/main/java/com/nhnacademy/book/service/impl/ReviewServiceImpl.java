@@ -40,6 +40,12 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public Long createReview(ReviewCreateRequest request, List<MultipartFile> images, Long memberId) {
 
+        // 주문 번호 중복 검사 (이미 리뷰를 쓴 주문인지 확인)
+        if (reviewRepository.existsByOrderId(request.orderId())) {
+            throw new IllegalStateException("이미 리뷰를 작성한 주문입니다.");
+            // 만약 별도의 Custom Exception이 있다면 그것으로 대체하세요. (예: DuplicateReviewException)
+        }
+
         // 도서 및 회원 존재 확인 (Gateway ID는 신뢰하지만, DB에 객체가 있어야 JPA 연결 가능)
         Book book = bookRepository.findById(request.bookId())
                 .orElseThrow(() -> new BookNotFoundException("존재하지 않는 도서입니다."));
@@ -48,6 +54,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = Review.builder()
                 .book(book)
                 .memberId(memberId)
+                .orderId(request.orderId())
                 .reviewRate(request.reviewRate())
                 .reviewContents(request.reviewContents())
                 .createdAt(LocalDateTime.now())
@@ -183,6 +190,10 @@ public class ReviewServiceImpl implements ReviewService {
         });
 
     }
-
+    // 주문 ID로 리뷰 존재 여부 확인 구현
+    @Override
+    public boolean existsByOrderId(Long orderId) {
+        return reviewRepository.existsByOrderId(orderId);
+    }
 
 }

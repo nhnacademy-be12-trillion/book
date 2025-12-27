@@ -9,6 +9,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
+    // 주문 아이디로 리뷰 존재 여부 확인 (중복 방지용)
+    boolean existsByOrderId(Long orderId);
+
     // 특정 도서의 리뷰 목록 페이징 조회
     Page<Review> findAllByBook_BookId(Long bookId, Pageable pageable);
 
