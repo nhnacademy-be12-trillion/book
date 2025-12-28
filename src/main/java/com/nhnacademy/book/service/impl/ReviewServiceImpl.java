@@ -5,6 +5,8 @@ import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
 import com.nhnacademy.book.dto.review.ReviewResponse;
 import com.nhnacademy.book.entity.*;
 import com.nhnacademy.book.exception.*;
+import com.nhnacademy.book.point.PointClient;
+import com.nhnacademy.book.point.ReviewPointRequest;
 import com.nhnacademy.book.repository.BookFileRepository;
 import com.nhnacademy.book.repository.BookRepository;
 import com.nhnacademy.book.repository.ReviewRepository;
@@ -34,6 +36,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final BookFileRepository bookFileRepository;
     private final MinioService minioService;
     private final FileService fileService;
+    private final PointClient pointClient;
 
     // 리뷰 작성
     @Override
@@ -62,6 +65,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review savedReview = reviewRepository.save(review);
 
+        boolean hasPhoto = false;
         if (images != null && !images.isEmpty()) {
             List<String> imageUrls = new ArrayList<>();
             for (MultipartFile image : images) {
@@ -72,9 +76,13 @@ public class ReviewServiceImpl implements ReviewService {
                 }
             }
             // BookFile 테이블에 저장 (FileType.REVIEW, joinedId = 리뷰ID)
-            fileService.saveReviewImages(savedReview.getReviewId(),imageUrls);
+            if (!imageUrls.isEmpty()) {
+                fileService.saveReviewImages(savedReview.getReviewId(), imageUrls);
+                hasPhoto = true;
+            }
         }
-
+        // 포인트 적립
+        pointClient.awardReviewPoints(memberId, new ReviewPointRequest(savedReview.getReviewId(), hasPhoto));
         // 평점 업데이트
         updateBookAverageRating(book.getBookId());
 
