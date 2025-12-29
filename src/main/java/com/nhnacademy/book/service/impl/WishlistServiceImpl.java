@@ -46,38 +46,54 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    // 조회 메서드지만 내부에서 '삭제(delete)'가 발생 가능 readOnly = true를 제거
     public List<BookListResponse> getWishlist(Long memberId) {
-        // 회원의 위시리스트 조회
+        // 1. 회원의 전체 위시리스트 조회
         List<Wishlist> wishlists = wishlistRepository.findByMemberId(memberId);
 
         if (wishlists.isEmpty()) {
             return List.of();
         }
 
-        // 조회된 위시리스트에서 책 ID 목록 추출
-        List<Long> bookIds = wishlists.stream()
+        // 2. [핵심 로직] SALE_END(판매 종료) 상태인 도서는 DB에서 삭제하고, 조회 목록에서도 제외
+        List<Wishlist> activeWishlists = wishlists.stream()
+                .filter(wishlist -> {
+                    // 책 상태 확인
+                    if (wishlist.getBook().getBookState() == BookState.SALE_END) {
+                        // 판매 종료된 책은 찜 목록에서 영구 삭제
+                        wishlistRepository.delete(wishlist);
+                        return false; // 리스트에 포함하지 않음
+                    }
+                    return true; // 리스트에 포함
+                })
+                .collect(Collectors.toList());
+
+        // 삭제 후 남은 유효한 위시리스트가 없으면 빈 리스트 반환
+        if (activeWishlists.isEmpty()) {
+            return List.of();
+        }
+
+        // 3. 유효한 도서들의 ID 목록 추출
+        List<Long> bookIds = activeWishlists.stream()
                 .map(wishlist -> wishlist.getBook().getBookId())
                 .collect(Collectors.toList());
 
-        // 책 ID 목록에 해당하는 이미지들을 한 번의 쿼리로 조회 (IN 절 사용)
+        // 4. 책 이미지 일괄 조회
         List<BookFile> bookFiles = bookFileRepository.findAllByJoinedIdInAndFileType(bookIds, FileType.BOOK);
 
-        // 조회된 이미지들을 Map으로 변환
+        // 5. 이미지를 Map으로 변환 (ID -> ImageUrl)
         Map<Long, String> bookImageMap = bookFiles.stream()
                 .collect(Collectors.toMap(
-                        BookFile::getJoinedId, // Key
-                        BookFile::getFileUrl,  // Value
-                        (existing, replacement) -> existing // 혹시 중복된 이미지가 있다면 기존 것 유지
+                        BookFile::getJoinedId,
+                        BookFile::getFileUrl,
+                        (existing, replacement) -> existing
                 ));
 
-        // BookListResponse 변환 및 반환
-        return wishlists.stream()
+        // 6. 응답 DTO 변환 및 반환
+        return activeWishlists.stream()
                 .map(wishlist -> {
                     Book book = wishlist.getBook();
-                    // 맵에서 해당 책의 이미지 URL을 찾고, 없으면 null 혹은 기본 이미지
                     String imageUrl = bookImageMap.get(book.getBookId());
-
                     return BookListResponse.from(book, imageUrl);
                 })
                 .collect(Collectors.toList());
