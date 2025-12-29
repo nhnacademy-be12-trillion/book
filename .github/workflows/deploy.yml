@@ -21,13 +21,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'maven'
-
 
       - name: Build with Maven
         run: mvn clean package -DskipTests
@@ -39,14 +39,9 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
           registry: ${{ env.REGISTRY }}
 
-      - name: 이미지 태그 세팅
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,format=short
-            type=raw,value=latest
+      - name: 새 태그 만들기
+        id: tag
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: 도커 이미지 빌드 & 푸시
         uses: docker/build-push-action@v6
@@ -54,7 +49,9 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
 
       - name: 파일 전송 및 배포
         uses: appleboy/ssh-action@v1.0.3
@@ -64,13 +61,13 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            set -euo pipefail
+
+            IMAGE_REPO="ghcr.io/nhnacademy-be12-trillion/book-service"
             SERVICE_NAME1="trillion-book-peer1"
             SERVICE_NAME2="trillion-book-peer2"
-            set -euo pipefail
-            IMAGE_REPO="ghcr.io/nhnacademy-be12-trillion/book-service"
-            NEW_TAG=${{ steps.meta.outputs.version }}
+            NEW_TAG="${{ steps.tag.outputs.tag }}"
 
-            # 현재 실행 중인 이미지 태그 추출 (peer1 기준)
             CURRENT_IMAGE=$(docker inspect --format='{{.Config.Image}}' "$SERVICE_NAME1" 2>/dev/null || echo "")
             HAS_PREV="true"
             if [ -z "$CURRENT_IMAGE" ]; then
@@ -99,14 +96,17 @@ jobs:
                   sleep 5
                   return 0
                 fi
+
                 if [ "$status" = "unhealthy" ]; then
                   echo "❌ $svc unhealthy"
                   docker compose logs --tail=200 "$svc" || true
                   return 1
                 fi
+
                 echo "  상태: $status (retry $i)"
                 sleep 2
               done
+
               echo "❌ $svc health timeout"
               docker compose logs --tail=200 "$svc" || true
               return 1
@@ -114,8 +114,7 @@ jobs:
 
             deploy_with_tag() {
               local tag="$1"
-              export ORDER_IMAGE_TAG="$tag"
-              # 해당 태그 이미지 미리 pull (실패 빨리 감지)
+              export BOOK_IMAGE_TAG="$tag"
               docker pull "${IMAGE_REPO}:${tag}" >/dev/null
 
               docker compose up -d --no-deps "$SERVICE_NAME1"
@@ -127,6 +126,7 @@ jobs:
 
             rollback() {
               local tag="$1"
+              echo "🔙 롤백 시작: $tag"
               deploy_with_tag "$tag"
               echo "✅ 롤백 완료: $tag"
             }
@@ -150,4 +150,4 @@ jobs:
             fi
 
             docker logout ${{ env.REGISTRY }}
-            echo "Order Service Cluster 배포 완료! (tag=$NEW_TAG)"
+            echo "Book Service Cluster 배포 완료! (tag=$NEW_TAG)"
