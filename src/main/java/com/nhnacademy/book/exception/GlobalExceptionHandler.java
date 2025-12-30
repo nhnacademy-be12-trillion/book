@@ -10,11 +10,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({BookNotFoundException.class,
-    CategoryNotFoundException.class, MemberNotFoundException.class,
-    WishlistNotFoundException.class, ReviewNotFoundException.class})
-    public ResponseEntity<ExceptionResponse> handleNotFoundException(Exception e){
-        log.warn("DATA_NOT_FOUND");
+    @ExceptionHandler({
+            BookNotFoundException.class,
+            CategoryNotFoundException.class,
+            MemberNotFoundException.class,
+            WishlistNotFoundException.class,
+            ReviewNotFoundException.class
+    })
+    public ResponseEntity<ExceptionResponse> handleNotFoundException(Exception e) {
+        log.warn("DATA_NOT_FOUND: {}", e.getMessage());
         ExceptionResponse response = ExceptionResponse.of(
                 HttpStatus.NOT_FOUND.toString(),
                 e.getMessage()
@@ -22,10 +26,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    @ExceptionHandler({AlreadyEnrolledException.class,
-    StockNotEnoughException.class})
-    public ResponseEntity<ExceptionResponse> handleAlreadyEnrolledException(AlreadyEnrolledException e){
-        log.warn("STATE_CONFLICT");
+    @ExceptionHandler({
+            AlreadyEnrolledException.class,
+            StockNotEnoughException.class,
+            DuplicateReviewException.class
+    })
+    public ResponseEntity<ExceptionResponse> handleConflictException(Exception e) {
+        log.warn("STATE_CONFLICT: {}", e.getMessage());
         ExceptionResponse response = ExceptionResponse.of(
                 HttpStatus.CONFLICT.toString(),
                 e.getMessage()
@@ -34,8 +41,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ReviewAccessDeniedException.class)
-    public ResponseEntity<ExceptionResponse> handleReviewAccessDeniedException(ReviewAccessDeniedException e){
-        log.warn("ACCESS_DENIED");
+    public ResponseEntity<ExceptionResponse> handleReviewAccessDeniedException(ReviewAccessDeniedException e) {
+        log.warn("ACCESS_DENIED: {}", e.getMessage());
         ExceptionResponse response = ExceptionResponse.of(
                 HttpStatus.FORBIDDEN.toString(),
                 e.getMessage()
@@ -44,14 +51,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ExternalApiCallException.class)
-    public ResponseEntity<ExceptionResponse> handleExternalApiCallException(ExternalApiCallException e){
-        log.warn("EXTERNAL_API_ERROR");
+    public ResponseEntity<ExceptionResponse> handleExternalApiCallException(ExternalApiCallException e) {
+        log.warn("EXTERNAL_API_ERROR: {}", e.getMessage());
         ExceptionResponse response = ExceptionResponse.of(
                 HttpStatus.BAD_GATEWAY.toString(),
                 e.getMessage()
         );
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
     }
-
-
 }

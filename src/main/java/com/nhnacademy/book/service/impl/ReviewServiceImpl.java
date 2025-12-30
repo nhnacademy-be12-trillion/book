@@ -45,8 +45,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 주문 번호 중복 검사 (이미 리뷰를 쓴 주문인지 확인)
         if (reviewRepository.existsByOrderId(request.orderId())) {
-            throw new IllegalStateException("이미 리뷰를 작성한 주문입니다.");
-            // 만약 별도의 Custom Exception이 있다면 그것으로 대체하세요. (예: DuplicateReviewException)
+            throw new DuplicateReviewException("이미 리뷰를 작성한 주문입니다.");
         }
 
         // 도서 및 회원 존재 확인 (Gateway ID는 신뢰하지만, DB에 객체가 있어야 JPA 연결 가능)
@@ -134,7 +133,6 @@ public class ReviewServiceImpl implements ReviewService {
         // 소유권 검증 로직
         // Gateway ID와 리뷰 작성자 ID가 다르면 권한 없음
         if (!review.getMemberId().equals(memberId)) {
-            // Global Exception Handler가 403을 반환하도록 식별자를 포함한 RuntimeException 사용
             throw new ReviewAccessDeniedException("AUTHORIZATION_FAILURE: 리뷰 수정 권한이 없습니다. (작성자 ID 불일치)");
         }
 
@@ -193,7 +191,6 @@ public class ReviewServiceImpl implements ReviewService {
         return reviews.map(review -> {
             List<String> imageUrls = reviewImageMap.getOrDefault(review.getReviewId(), Collections.emptyList());
             // 필요한 경우 ReviewResponse에 '책 제목'이나 '책 이미지' 정보가 필요할 수 있음
-            // 현재 DTO 구조상으로는 리뷰 내용과 이미지 위주로 반환됨
             return ReviewResponse.from(review, imageUrls);
         });
 
