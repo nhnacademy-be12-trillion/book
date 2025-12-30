@@ -1,22 +1,60 @@
 server:
-  port: 10413
+  port: 0  # 테스트 시 랜덤 포트를 사용하여 포트 충돌 방지
 
 spring:
+  application:
+    name: book-service-test
+
+  # [DB 설정] 테스트는 속도와 격리를 위해 H2 인메모리 DB 사용 권장
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
     username: sa
-    password:
+    password: ""
+
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true # SQL 로그 확인용
+      ddl-auto: create-drop  # 테스트 시작 시 테이블 생성, 종료 시 삭제
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect # H2 방언 사용
+        format_sql: true
+
   cloud:
     config:
-      enabled: false
-  config:
-    import: optional:123
+      enabled: false # 테스트 시 Config Server 비활성화
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# [Eureka 설정] 테스트 중에는 유레카 등록 비활성화 (불필요한 네트워크 에러 방지)
 eureka:
   client:
     enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+## [API 키 더미 데이터] 실제 호출이 발생하면 Mocking을 해야겠지만, 컨텍스트 로딩 에러는 이걸로 해결됩니다.
+aladin:
+  api:
+    ttb-key: "TEST_ALADIN_KEY"
+    url: "https://test.aladin.co.kr/api"
+
+book:
+  default-image: "/images/default_book.png"
+
+gemini:
+  api:
+    gemini-key: "TEST_GEMINI_KEY"
+
+## [MinIO 더미 설정]
+minio:
+  url: "http://localhost:9000"
+  access-key: "TEST_MINIO_ACCESS"
+  secret-key: "TEST_MINIO_SECRET"
+  bucket: "test-bucket"
