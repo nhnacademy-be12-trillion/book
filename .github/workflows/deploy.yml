@@ -30,7 +30,7 @@ jobs:
 
       - name: Run SonarQube
         run: |
-          mvn clean package \
+          mvn clean package sonar:sonar \
           -Dsonar.projectKey=trillion-book \
           -Dsonar.host.url=${{secrets.SONAR_HOST}} \
           -Dsonar.token=${{secrets.SONAR_TOKEN}}
