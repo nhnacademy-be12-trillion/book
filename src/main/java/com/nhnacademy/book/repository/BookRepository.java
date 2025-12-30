@@ -14,29 +14,32 @@ import java.util.List;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
 
+    // 특정 도서의 조회수를 1 증가
     @Modifying
     @Query("UPDATE Book b SET b.viewCount = b.viewCount + 1 WHERE b.bookId = :bookId")
     void updateViewCount(@Param("bookId") Long bookId);
 
+    // 도서 목록과 대표 이미지 URL을 함께 페이징 조회
     @Query("SELECT b, f.fileUrl " +
             "FROM Book b " +
             "LEFT JOIN FETCH b.publisher " +
             "LEFT JOIN BookFile f ON b.bookId = f.joinedId AND f.fileType = :fileType")
     Page<Object[]> findAllBooksWithImage(Pageable pageable, @Param("fileType") FileType fileType);
 
+    // 조회수 기준 상위 10개 도서 조회
     List<Book> findTop10ByOrderByViewCountDesc();
 
-    List<Book> findTop5ByOrderByBookPublicationDateDescBookIdDesc();
 
-    // [★필수] 카테고리별 신간 조회 쿼리
+    // 특정 카테고리에 속한 신간 도서 목록 조회
     @Query("SELECT b FROM Book b JOIN b.bookCategories bc " +
             "WHERE bc.category.categoryId = :categoryId " +
             "ORDER BY b.bookPublicationDate DESC")
     List<Book> findBooksByCategoryId(@Param("categoryId") Long categoryId, Pageable pageable);
 
-    // 기존 메서드들 유지
+    // 여러 도서 ID에 해당하는 도서 목록 조회
     List<Book> findBooksByBookIdIn(List<Long> bookIds);
 
+    // 주문 처리를 위해 필요한 도서 정보 조회
     @Query("""
         SELECT new com.nhnacademy.book.client.order.dto.OrderBookResponse(b.bookId, b.bookName, b.bookSalePrice, b.bookPackaging, f.fileUrl)
         FROM Book b
@@ -45,15 +48,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     """)
     List<OrderBookResponse> findBooksInfoForOrderByIds(@Param("bookIds") List<Long> bookIds, @Param("fileType") FileType fileType);
 
-    @Modifying
-    @Query("UPDATE Book b SET b.bookStock = b.bookStock - :quantity WHERE b.bookId = :bookId AND b.bookStock >= :quantity")
-    int decreaseStock(@Param("bookId") Long bookId, @Param("quantity") int quantity);
-
-    @Modifying
-    @Query("UPDATE Book b SET b.bookStock = b.bookStock + :quantity WHERE b.bookId = :bookId")
-    void increaseStock(@Param("bookId") Long bookId, @Param("quantity") int quantity);
-
+    // ISBN 기준 도서 존재 여부 확인
     boolean existsBookByIsbn(String isbn);
 
+    // 카테고리 ID 기준 도서 목록 페이징 조회
     Page<Book> findByBookCategories_Category_CategoryId(Long categoryId, Pageable pageable);
 }

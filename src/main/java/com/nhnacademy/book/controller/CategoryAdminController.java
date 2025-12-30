@@ -19,9 +19,10 @@ public class CategoryAdminController {
     private final CategoryService categoryService;
 
     //AI 도서 등록 시 카테고리 검색 API
+    // GET /api/admin/categories/search
     @GetMapping("/search")
     public ResponseEntity<List<CategorySearchResponse>> searchCategories(@RequestParam String keyword) {
-        // 유효성 검사: 검색어가 없으면 빈 리스트 반환 (200 OK)
+        // 유효성 검사 - 검색어가 없으면 빈 리스트 반환 (200 OK)
         List<CategorySearchResponse> searchCategories = categoryService.searchCategories(keyword);
         // 결과 반환 (200 OK)
         return ResponseEntity.ok(searchCategories);

@@ -17,12 +17,16 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    // 카테고리 전체 조회 API
+    // 카테고리 전체 트리 구조 조회 API
+    // GET /api/books/categories
     @GetMapping
     public ResponseEntity<List<CategoryTreeResponse>> getAllCategories() {
         List<CategoryTreeResponse> responses = categoryService.getCategoryTree();
         return ResponseEntity.ok(responses);
     }
+
+    // 특정 도서들의 카테고리 정보 조회 API
+    // GET /api/books/categories?bookIds={bookIds}
     @GetMapping(params = "bookIds")
     public List<BookCategoryResponse> getBookCategories(@RequestParam List<Long> bookIds) {
         return BookCategoryResponse.of(categoryService.getCategoryIds(bookIds));

@@ -19,16 +19,13 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/books") // Gateway의 /api/books/** 라우팅을 타기 위해 경로 수정
+@RequestMapping("/books")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    /**
-     * 리뷰 등록 API
-     * 프론트 호출: POST /api/books/reviews
-     * 게이트웨이 통과 후: POST /books/reviews
-     */
+     // 리뷰 등록 API
+     // POST /api/books/reviews
     @PostMapping(value = "/reviews",consumes = {MediaType.MULTIPART_FORM_DATA_VALUE,MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Long> createReview(
             @RequestPart("request") ReviewCreateRequest request,
@@ -39,10 +36,8 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewId);
     }
 
-    /**
-     * 리뷰 수정 API
-     * 프론트 호출: PUT /api/books/reviews/{reviewId}
-     */
+     // 리뷰 수정 API
+     // PUT /api/books/reviews/{review-id}
     @PutMapping("/reviews/{review-id}")
     public ResponseEntity<Void> updateReview(
             @PathVariable("review-id") Long reviewId,
@@ -53,10 +48,9 @@ public class ReviewController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 특정 도서의 리뷰 목록 조회 API
-     * 프론트 호출: GET /api/books/{bookId}/reviews
-     */
+
+     // 특정 도서의 리뷰 목록 조회 API
+     // GET /api/books/{book-id}/reviews
     @GetMapping("/{book-id}/reviews")
     public ResponseEntity<Page<ReviewResponse>> getReviewsByBookId(
             @PathVariable("book-id") Long bookId,
@@ -66,11 +60,8 @@ public class ReviewController {
         return ResponseEntity.ok(reviews);
     }
 
-    /**
-     * 마이페이지 - 내 전체 리뷰 목록 조회 API
-     * 프론트 호출: GET /api/books/reviews/me
-     * (기존 /api/mypage 경로는 게이트웨이 설정에 없으므로 /api/books 하위로 이동 권장)
-     */
+     // 마이페이지 - 내 전체 리뷰 목록 조회 API
+     // GET /api/books/reviews/me
     @GetMapping("/reviews/me")
     public ResponseEntity<Page<ReviewResponse>> getMyReviews(
             @RequestHeader("X-Member-Id") Long memberId,
@@ -81,8 +72,9 @@ public class ReviewController {
     }
 
     // 리뷰 작성 여부 확인 API
-    @GetMapping("/reviews/check/{orderId}")
-    public ResponseEntity<Boolean> checkReviewExistence(@PathVariable Long orderId) {
+    // GET /api/books/reviews/check/{order-id}
+    @GetMapping("/reviews/check/{order-id}")
+    public ResponseEntity<Boolean>   checkReviewExistence(@PathVariable("order-id") Long orderId) {
         boolean exists = reviewService.existsByOrderId(orderId);
         return ResponseEntity.ok(exists);
     }

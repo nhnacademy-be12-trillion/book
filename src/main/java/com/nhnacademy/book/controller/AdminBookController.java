@@ -18,7 +18,8 @@ public class AdminBookController {
     private final BookService bookService;
     private final BookAiRegistrationService bookAiRegistrationService;
 
-    //도서 등록 API
+    // 도서 등록 API
+    // POST /api/admin/books
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Long> createBook(
             @RequestPart("book") BookCreateRequest request,
@@ -32,6 +33,7 @@ public class AdminBookController {
 
 
     // 도서 수정 API
+    // PUT /api/admin/books/{book-id}
     @PutMapping("/{book-id}")
     public ResponseEntity<Void> updateBook(@PathVariable("book-id") Long bookId, @RequestBody BookUpdateRequest request) {
         bookService.updateBook(bookId, request);
@@ -39,6 +41,7 @@ public class AdminBookController {
     }
 
     // 도서 삭제 API
+    // DELETE /api/admin/books/{book-id}
     @DeleteMapping("/{book-id}")
     public ResponseEntity<Void> deleteBook(@PathVariable("book-id") Long bookId) {
         bookService.deleteBook(bookId);
@@ -46,6 +49,7 @@ public class AdminBookController {
     }
 
     // 알라딘 API에서 ISBN으로 도서 정보 호출 API
+    // GET /api/admin/books/isbn/{isbn}
     @GetMapping("/isbn/{isbn}")
     public ResponseEntity<BookCreateRequest> getBookInfoByIsbn(@PathVariable String isbn) {
         BookCreateRequest response = bookAiRegistrationService.getBookInfoByIsbn(isbn);

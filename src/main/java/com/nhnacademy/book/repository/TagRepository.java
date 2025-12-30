@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TagRepository extends JpaRepository<Tag, Long> {
-    @Query("SELECT t.tagName FROM Tag t")
-    List<String> findAllTagName();
 
+    // 태그 이름으로 태그 단건 조회
     Optional<Tag> findByTagName(String tagName);
 }

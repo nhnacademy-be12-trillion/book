@@ -78,7 +78,7 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public List<BookListResponse> getBooksByCategory(Long categoryId) {
-        // [★필수] 카테고리별 신간 Top 5 구현
+        // 카테고리별 신간 Top 5 구현
         Pageable limitFive = PageRequest.of(0, 5);
         List<Book> books = bookRepository.findBooksByCategoryId(categoryId, limitFive);
         return convertToDtoList(books);
@@ -89,12 +89,18 @@ public class BookServiceImpl implements BookService {
     public BookDetailResponse getBook(Long bookId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException("해당 도서가 존재하지 않습니다. ID: " + bookId));
+
+        //  판매 종료(SALE_END) 상태인지 확인
+        if (book.getBookState().equals(BookState.SALE_END)) {
+            // 판매 종료된 책은 '찾을 수 없음' 예외를 던져서 404 화면이나 에러 처리가 되도록 유도
+            throw new BookNotFoundException("판매가 종료되어 조회할 수 없는 도서입니다.");
+        }
+
         String imageUrl = fileRepository.findFirstByJoinedIdAndFileType(bookId, FileType.BOOK)
                 .map(BookFile::getFileUrl).orElse(null);
         return BookDetailResponse.from(book, imageUrl);
     }
 
-    // ... (create, update, delete 메서드는 기존 코드 유지) ...
     @Override
     @Transactional
     public Long createBook(BookCreateRequest request, MultipartFile file) {
@@ -165,7 +171,7 @@ public class BookServiceImpl implements BookService {
         return (int) Math.round(regularPrice * (1 - discountRate / 100.0));
     }
 
-    // [중요] 도서 목록을 DTO로 변환하면서 이미지 URL을 매핑하는 메서드
+    // 도서 목록을 DTO로 변환하면서 이미지 URL을 매핑하는 메서드
     private List<BookListResponse> convertToDtoList(List<Book> books) {
         if (books.isEmpty()) return List.of();
         List<Long> bookIds = books.stream().map(Book::getBookId).toList();
@@ -216,24 +222,24 @@ public class BookServiceImpl implements BookService {
         return rootCategories.stream().map(category -> new CategoryTreeResponse(category.getCategoryId(), category.getCategoryName(), List.of())).collect(Collectors.toList());
     }
 
-    // [수정 완료] 카테고리별 도서 조회 시에도 이미지를 함께 가져오도록 변경
+    // 카테고리별 도서 조회 시에도 이미지를 함께 가져오도록 변경
     @Override
     @Transactional(readOnly = true)
     public Page<BookListResponse> getBooksByCategoryPage(Long categoryId, Pageable pageable) {
-        // 1. 카테고리에 해당하는 도서 페이징 조회 (엔티티만 가져옴)
+        // 카테고리에 해당하는 도서 페이징 조회 (엔티티만 가져옴)
         Page<Book> booksPage = bookRepository.findByBookCategories_Category_CategoryId(categoryId, pageable);
 
-        // 2. 조회된 도서들의 ID 추출
+        // 조회된 도서들의 ID 추출
         List<Long> bookIds = booksPage.getContent().stream()
                 .map(Book::getBookId)
                 .collect(Collectors.toList());
 
-        // 3. 도서 ID들에 해당하는 이미지 조회
+        // 도서 ID들에 해당하는 이미지 조회
         List<BookFile> images = fileRepository.findAllByJoinedIdInAndFileType(bookIds, FileType.BOOK);
         Map<Long, String> imageMap = images.stream()
                 .collect(Collectors.toMap(BookFile::getJoinedId, BookFile::getFileUrl, (oldVal, newVal) -> oldVal));
 
-        // 4. 도서 엔티티와 이미지 URL을 조립하여 DTO로 변환
+        // 도서 엔티티와 이미지 URL을 조립하여 DTO로 변환
         return booksPage.map(book -> BookListResponse.from(book, imageMap.get(book.getBookId())));
     }
 }
