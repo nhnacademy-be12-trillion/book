@@ -1,238 +1,327 @@
-//package com.nhnacademy.book.service.impl;
-//
-//import com.nhnacademy.book.dto.review.ReviewCreateRequest;
-//import com.nhnacademy.book.dto.review.ReviewResponse;
-//import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
-//import com.nhnacademy.book.entity.Book;
-//import com.nhnacademy.book.entity.Member;
-//import com.nhnacademy.book.entity.Review;
-//import com.nhnacademy.book.repository.BookRepository;
-//import com.nhnacademy.book.repository.MemberRepository;
-//import com.nhnacademy.book.repository.ReviewRepository;
-//import org.junit.jupiter.api.DisplayName;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.springframework.data.domain.Page;
-//import org.springframework.data.domain.PageImpl;
-//import org.springframework.data.domain.PageRequest;
-//import org.springframework.data.domain.Pageable;
-//
-//import java.util.List;
-//import java.util.Optional;
-//
-//import static org.assertj.core.api.Assertions.assertThat;
-//import static org.assertj.core.api.Assertions.assertThatThrownBy;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.ArgumentMatchers.anyLong;
-//import static org.mockito.BDDMockito.given;
-//import static org.mockito.Mockito.verify;
-//
-//@ExtendWith(MockitoExtension.class)
-//class ReviewServiceImplTest {
-//
-//    @InjectMocks
-//    private ReviewServiceImpl reviewService;
-//
-//    @Mock
-//    private ReviewRepository reviewRepository;
-//
-//    @Mock
-//    private BookRepository bookRepository;
-//
-//    @Mock
-//    private MemberRepository memberRepository;
-//
-//    @Test
-//    @DisplayName("리뷰 작성 성공 - 저장 및 평점 업데이트 확인")
-//    void createReview_Success() {
-//        // given
-//        Long memberId = 1L;
-//        Long bookId = 10L;
-//        ReviewCreateRequest request = new ReviewCreateRequest(bookId, 5, "재미있어요!");
-//
-//        Book book = new Book();
-//        book.setBookId(bookId);
-//
-//        Member member = new Member();
-//        member.setMemberId(memberId);
-//
-//        // 저장될 리뷰 객체 (Mock 반환용)
-//        Review savedReview = Review.builder()
-//                .book(book)
-//                .member(member)
-//                .reviewRate(5)
-//                .reviewContents("재미있어요!")
-//                .build();
-//        // ID 강제 주입 (리플렉션이나 setter 필요하지만, 여기선 Mockito가 객체 자체를 반환하므로 getter에서 쓸 수 있게 설정한다고 가정하거나, Test용 객체 사용)
-//        // 실제로는 JPA가 ID를 할당하지만, Test에서는 리턴값을 검증하므로 그대로 사용
-//
-//        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
-//        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
-//        given(reviewRepository.save(any(Review.class))).willReturn(savedReview);
-//
-//        // 평점 계산 Mock (평균 5.0이라고 가정)
-//        given(reviewRepository.findAverageRatingByBookId(bookId)).willReturn(5.0);
-//
-//        // when
-//        reviewService.createReview(request, memberId);
-//
-//        // then
-//        verify(reviewRepository).save(any(Review.class));
-//        verify(reviewRepository).findAverageRatingByBookId(bookId);
-//
-//        // Book 엔티티의 평점이 업데이트 되었는지 확인
-//        assertThat(book.getBookReviewRate()).isEqualTo(5.0);
-//    }
-//
-//    @Test
-//    @DisplayName("리뷰 작성 실패 - 존재하지 않는 도서")
-//    void createReview_BookNotFound() {
-//        // given
-//        ReviewCreateRequest request = new ReviewCreateRequest(99L, 5, "내용");
-//        given(bookRepository.findById(99L)).willReturn(Optional.empty());
-//
-//        // when & then
-//        assertThatThrownBy(() -> reviewService.createReview(request, 1L))
-//                .isInstanceOf(IllegalArgumentException.class)
-//                .hasMessageContaining("존재하지 않는 도서");
-//    }
-//
-//    @Test
-//    @DisplayName("리뷰 작성 실패 - 존재하지 않는 회원")
-//    void createReview_MemberNotFound() {
-//        // given
-//        Long bookId = 1L;
-//        Long memberId = 99L;
-//        ReviewCreateRequest request = new ReviewCreateRequest(bookId, 5, "내용");
-//
-//        given(bookRepository.findById(bookId)).willReturn(Optional.of(new Book()));
-//        given(memberRepository.findById(memberId)).willReturn(Optional.empty());
-//
-//        // when & then
-//        assertThatThrownBy(() -> reviewService.createReview(request, memberId))
-//                .isInstanceOf(IllegalArgumentException.class)
-//                .hasMessageContaining("존재하지 않는 회원");
-//    }
-//
-//    @Test
-//    @DisplayName("리뷰 수정 성공 - 작성자 본인 확인 및 평점 재계산")
-//    void updateReview_Success() {
-//        // given
-//        Long reviewId = 1L;
-//        Long memberId = 1L; // 작성자 ID
-//        Long bookId = 10L;
-//
-//        Member writer = new Member();
-//        writer.setMemberId(memberId);
-//
-//        Book book = new Book();
-//        book.setBookId(bookId);
-//
-//        // 기존 리뷰
-//        Review review = Review.builder()
-//                .member(writer)
-//                .book(book)
-//                .reviewRate(5)
-//                .reviewContents("원래 내용")
-//                .build();
-//
-//        // 수정 요청
-//        ReviewUpdateRequest request = new ReviewUpdateRequest(3, "수정된 내용");
-//
-//        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-//        // 평점 재계산 Mock (수정 후 평균 3.0 가정)
-//        given(reviewRepository.findAverageRatingByBookId(bookId)).willReturn(3.0);
-//        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
-//
-//
-//        // when
-//        reviewService.updateReview(reviewId, request, memberId);
-//
-//        // then
-//        // 1. 내용 변경 확인 (Dirty Checking을 위한 엔티티 상태 변경)
-//        assertThat(review.getReviewContents()).isEqualTo("수정된 내용");
-//        assertThat(review.getReviewRate()).isEqualTo(3);
-//
-//        // 2. 평점 재계산 로직 호출 확인
-//        verify(reviewRepository).findAverageRatingByBookId(bookId);
-//        assertThat(book.getBookReviewRate()).isEqualTo(3.0);
-//    }
-//
-//    @Test
-//    @DisplayName("리뷰 수정 실패 - 작성자가 아님 (권한 없음)")
-//    void updateReview_Unauthorized() {
-//        // given
-//        Long reviewId = 1L;
-//        Long ownerId = 1L;
-//        Long otherUserId = 2L; // 다른 사용자
-//
-//        Member writer = new Member();
-//        writer.setMemberId(ownerId);
-//
-//        Review review = Review.builder()
-//                .member(writer) // 작성자는 1번
-//                .build();
-//
-//        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-//
-//        ReviewUpdateRequest request = new ReviewUpdateRequest(1, "해킹 시도");
-//
-//        // when & then
-//        assertThatThrownBy(() -> reviewService.updateReview(reviewId, request, otherUserId))
-//                .isInstanceOf(RuntimeException.class)
-//                .hasMessageContaining("AUTHORIZATION_FAILURE");
-//    }
-//
-//    @Test
-//    @DisplayName("도서별 리뷰 목록 조회")
-//    void getReviewsByBookId_Success() {
-//        // given
-//        Long bookId = 1L;
-//        Pageable pageable = PageRequest.of(0, 10);
-//
-//        // Mocking을 위한 더미 데이터
-//        Member member = new Member();
-//        member.setMemberId(1L);
-//        member.setName("testUser"); // Response 변환 시 필요할 수 있음
-//
-//        Review review = Review.builder()
-//                .reviewRate(5)
-//                .reviewContents("좋아요")
-//                .member(member)
-//                .build();
-//
-//        Page<Review> reviewPage = new PageImpl<>(List.of(review));
-//
-//        given(reviewRepository.findAllByBook_BookId(bookId, pageable)).willReturn(reviewPage);
-//
-//        // when
-//        Page<ReviewResponse> result = reviewService.getReviewsByBookId(bookId, pageable);
-//
-//        // then
-//        assertThat(result.getContent()).hasSize(1);
-//        assertThat(result.getContent().get(0).reviewContents()).isEqualTo("좋아요");
-//    }
-//
-//    @Test
-//    @DisplayName("평점 평균 업데이트 로직 검증 (리뷰 삭제 등에서 활용될 로직)")
-//    void updateBookAverageRating_CalculateCorrectly() {
-//        // given
-//        Long bookId = 10L;
-//        Book book = new Book();
-//        book.setBookId(bookId);
-//        book.setBookReviewRate(0.0); // 초기값
-//
-//        given(reviewRepository.findAverageRatingByBookId(bookId)).willReturn(4.555); // 소수점 셋째자리
-//        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
-//
-//        // when
-//        reviewService.updateBookAverageRating(bookId);
-//
-//        // then
-//        // Math.round(4.555 * 100.0) / 100.0 => 455.5 반올림 => 456 / 100.0 => 4.56
-//        assertThat(book.getBookReviewRate()).isEqualTo(4.56);
-//    }
-//}
+package com.nhnacademy.book.service.impl;
+
+import com.nhnacademy.book.dto.review.ReviewCreateRequest;
+import com.nhnacademy.book.dto.review.ReviewResponse;
+import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
+import com.nhnacademy.book.entity.Book;
+import com.nhnacademy.book.entity.BookFile;
+import com.nhnacademy.book.entity.FileType;
+import com.nhnacademy.book.entity.Review;
+import com.nhnacademy.book.exception.BookNotFoundException;
+import com.nhnacademy.book.exception.DuplicateReviewException;
+import com.nhnacademy.book.exception.ReviewAccessDeniedException;
+import com.nhnacademy.book.exception.ReviewNotFoundException;
+import com.nhnacademy.book.point.PointClient;
+import com.nhnacademy.book.point.ReviewPointRequest;
+import com.nhnacademy.book.repository.BookFileRepository;
+import com.nhnacademy.book.repository.BookRepository;
+import com.nhnacademy.book.repository.ReviewRepository;
+import com.nhnacademy.book.service.FileService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class ReviewServiceImplTest {
+
+    @InjectMocks
+    private ReviewServiceImpl reviewService;
+
+    @Mock
+    private ReviewRepository reviewRepository;
+    @Mock
+    private BookRepository bookRepository;
+    @Mock
+    private BookFileRepository bookFileRepository;
+    @Mock
+    private MinioService minioService;
+    @Mock
+    private FileService fileService;
+    @Mock
+    private PointClient pointClient;
+
+    /**
+     * Book 엔티티 생성 도우미 메서드
+     */
+    private Book createBook(Long bookId) {
+        Book book = Book.builder()
+                .bookName("테스트 도서")
+                .bookStock(10)
+                .build();
+        ReflectionTestUtils.setField(book, "bookId", bookId);
+        return book;
+    }
+
+    @Test
+    @DisplayName("리뷰 생성 성공 - 이미지 포함")
+    void createReview_Success_WithImages() {
+        // given
+        Long memberId = 1L;
+        Long bookId = 10L;
+        Long orderId = 100L;
+
+        // [수정] 생성자 파라미터 순서 변경 (orderId, bookId)
+        ReviewCreateRequest request = new ReviewCreateRequest(orderId, bookId, 5, "이미지가 있는 리뷰입니다.");
+
+        Book book = createBook(bookId);
+
+        Review review = Review.builder()
+                .reviewId(1L)
+                .book(book)
+                .memberId(memberId)
+                .orderId(orderId)
+                .reviewRate(5)
+                .reviewContents("내용")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        MockMultipartFile image = new MockMultipartFile("images", "test.jpg", "image/jpeg", "dummy".getBytes());
+        List<MultipartFile> images = List.of(image);
+
+        // Mocking: 명시적으로 bookId 사용
+        given(reviewRepository.existsByOrderId(orderId)).willReturn(false);
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+        given(reviewRepository.save(any(Review.class))).willReturn(review);
+        given(minioService.uploadImage(any(MultipartFile.class))).willReturn("http://minio/test.jpg");
+        given(reviewRepository.findAverageRatingByBookId(bookId)).willReturn(5.0);
+
+        // when
+        Long savedReviewId = reviewService.createReview(request, images, memberId);
+
+        // then
+        assertThat(savedReviewId).isEqualTo(1L);
+        verify(minioService, times(1)).uploadImage(any(MultipartFile.class));
+        verify(fileService, times(1)).saveReviewImages(eq(1L), anyList());
+        verify(pointClient, times(1)).awardReviewPoints(eq(memberId), argThat(pointRequest -> pointRequest.hasPhoto()));
+        assertThat(book.getBookReviewRate()).isEqualTo(5.0);
+    }
+
+    @Test
+    @DisplayName("리뷰 생성 성공 - 이미지 없음")
+    void createReview_Success_NoImages() {
+        // given
+        Long memberId = 1L;
+        Long bookId = 10L;
+        Long orderId = 100L;
+        // [수정] 생성자 파라미터 순서 변경 (orderId, bookId)
+        ReviewCreateRequest request = new ReviewCreateRequest(orderId, bookId, 4, "이미지 없는 리뷰");
+
+        Book book = createBook(bookId);
+        Review review = Review.builder().reviewId(2L).book(book).build();
+
+        given(reviewRepository.existsByOrderId(orderId)).willReturn(false);
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+        given(reviewRepository.save(any(Review.class))).willReturn(review);
+        given(reviewRepository.findAverageRatingByBookId(bookId)).willReturn(4.0);
+
+        // when
+        reviewService.createReview(request, null, memberId);
+
+        // then
+        verify(minioService, never()).uploadImage(any());
+        verify(fileService, never()).saveReviewImages(anyLong(), anyList());
+        verify(pointClient, times(1)).awardReviewPoints(eq(memberId), argThat(pointRequest -> !pointRequest.hasPhoto()));
+    }
+
+    @Test
+    @DisplayName("리뷰 생성 실패 - 중복된 주문 번호")
+    void createReview_Fail_DuplicateOrder() {
+        // given
+        Long orderId = 100L;
+        Long bookId = 1L;
+        // [수정] 생성자 파라미터 순서 변경 (orderId, bookId)
+        ReviewCreateRequest request = new ReviewCreateRequest(orderId, bookId, 5, "중복 리뷰 시도");
+        given(reviewRepository.existsByOrderId(orderId)).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> reviewService.createReview(request, null, 1L))
+                .isInstanceOf(DuplicateReviewException.class)
+                .hasMessageContaining("이미 리뷰를 작성한 주문입니다.");
+    }
+
+    @Test
+    @DisplayName("리뷰 생성 실패 - 존재하지 않는 도서")
+    void createReview_Fail_BookNotFound() {
+        // given
+        Long orderId = 100L;
+        Long nonExistentBookId = 999L;
+        // [수정] 생성자 파라미터 순서 변경 (orderId, bookId)
+        ReviewCreateRequest request = new ReviewCreateRequest(orderId, nonExistentBookId, 5, "책이 없음");
+
+        given(reviewRepository.existsByOrderId(orderId)).willReturn(false);
+        given(bookRepository.findById(nonExistentBookId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> reviewService.createReview(request, null, 1L))
+                .isInstanceOf(BookNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("도서별 리뷰 목록 조회 - 이미지 매핑 확인")
+    void getReviewsByBookId_Success() {
+        // given
+        Long bookId = 10L;
+        Pageable pageable = PageRequest.of(0, 10);
+        Book book = createBook(bookId);
+
+        // Book 객체 주입하여 Review 생성
+        Review review1 = Review.builder().reviewId(1L).book(book).reviewContents("리뷰1").build();
+        Review review2 = Review.builder().reviewId(2L).book(book).reviewContents("리뷰2").build();
+        Page<Review> reviewPage = new PageImpl<>(List.of(review1, review2));
+
+        given(reviewRepository.findAllByBook_BookId(bookId, pageable)).willReturn(reviewPage);
+
+        // 이미지 준비
+        BookFile file1 = BookFile.builder()
+                .fileUrl("http://img/1.jpg")
+                .fileType(FileType.REVIEW)
+                .joinedId(1L)
+                .build();
+
+        given(bookFileRepository.findAllByJoinedIdInAndFileType(anyList(), eq(FileType.REVIEW)))
+                .willReturn(List.of(file1));
+
+        // when
+        Page<ReviewResponse> result = reviewService.getReviewsByBookId(bookId, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+
+        assertThat(result.getContent().get(0).reviewContents()).isEqualTo("리뷰1");
+        // DTO getter 이름 확인 필요 (imageUrls 또는 reviewImageUrls)
+        assertThat(result.getContent().get(0).imageUrls()).contains("http://img/1.jpg");
+
+        assertThat(result.getContent().get(1).reviewContents()).isEqualTo("리뷰2");
+        assertThat(result.getContent().get(1).imageUrls()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 성공")
+    void updateReview_Success() {
+        // given
+        Long reviewId = 1L;
+        Long memberId = 1L;
+        ReviewUpdateRequest request = new ReviewUpdateRequest(3, "수정된 리뷰");
+
+        Book book = createBook(10L);
+        Review review = Review.builder()
+                .reviewId(reviewId)
+                .memberId(memberId)
+                .book(book)
+                .reviewRate(5)
+                .reviewContents("원본")
+                .build();
+
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+        given(reviewRepository.findAverageRatingByBookId(book.getBookId())).willReturn(3.0);
+        given(bookRepository.findById(book.getBookId())).willReturn(Optional.of(book));
+
+        // when
+        reviewService.updateReview(reviewId, request, memberId);
+
+        // then
+        assertThat(review.getReviewRate()).isEqualTo(3);
+        assertThat(review.getReviewContents()).isEqualTo("수정된 리뷰");
+        assertThat(book.getBookReviewRate()).isEqualTo(3.0);
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 실패 - 권한 없음")
+    void updateReview_Fail_AccessDenied() {
+        // given
+        Long reviewId = 1L;
+        Long requesterId = 2L;
+        Long ownerId = 1L;
+
+        Review review = Review.builder().reviewId(reviewId).memberId(ownerId).build();
+        ReviewUpdateRequest request = new ReviewUpdateRequest(3, "수정");
+
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+
+        // when & then
+        assertThatThrownBy(() -> reviewService.updateReview(reviewId, request, requesterId))
+                .isInstanceOf(ReviewAccessDeniedException.class)
+                .hasMessageContaining("권한이 없습니다");
+    }
+
+    @Test
+    @DisplayName("회원별 리뷰 목록 조회")
+    void getReviewsByMemberId_Success() {
+        // given
+        Long memberId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+        Book book = createBook(10L);
+
+        // Book 주입 필수 (NPE 방지)
+        Review review = Review.builder()
+                .reviewId(1L)
+                .book(book)
+                .reviewContents("내 리뷰")
+                .build();
+
+        given(reviewRepository.findAllByMemberId(memberId, pageable))
+                .willReturn(new PageImpl<>(List.of(review)));
+        given(bookFileRepository.findAllByJoinedIdInAndFileType(anyList(), eq(FileType.REVIEW)))
+                .willReturn(Collections.emptyList());
+
+        // when
+        Page<ReviewResponse> result = reviewService.getReviewsByMemberId(memberId, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).reviewContents()).isEqualTo("내 리뷰");
+    }
+
+    @Test
+    @DisplayName("도서 평점 평균 계산 및 업데이트 (반올림 확인)")
+    void updateBookAverageRating_Calculation() {
+        // given
+        Long bookId = 10L;
+        Book book = createBook(bookId);
+
+        given(reviewRepository.findAverageRatingByBookId(bookId)).willReturn(4.555);
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+
+        // when
+        reviewService.updateBookAverageRating(bookId);
+
+        // then
+        assertThat(book.getBookReviewRate()).isEqualTo(4.56);
+    }
+
+    @Test
+    @DisplayName("주문 ID로 리뷰 존재 여부 확인")
+    void existsByOrderId_Test() {
+        // given
+        Long orderId = 100L;
+        given(reviewRepository.existsByOrderId(orderId)).willReturn(true);
+
+        // when
+        boolean exists = reviewService.existsByOrderId(orderId);
+
+        // then
+        assertThat(exists).isTrue();
+    }
+}
