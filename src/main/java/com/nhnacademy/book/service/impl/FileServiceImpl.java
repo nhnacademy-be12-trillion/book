@@ -58,7 +58,7 @@ public class FileServiceImpl implements FileService {
         bookFileRepository.saveAll(reviewFiles);
     }
 
-    //도서 이미지 가져오기
+    // 도서 이미지 가져오기
     @Override
     @Transactional(readOnly = true)
     public String getBookImage(Long bookId) {
@@ -67,7 +67,7 @@ public class FileServiceImpl implements FileService {
                 .orElse(null);
     }
 
-    //리뷰 1개에 달린 이미지 리스트 조회
+    // 리뷰 1개에 달린 이미지 리스트 조회
     @Override
     @Transactional(readOnly = true)
     public List<String> getReviewImages(Long reviewId){

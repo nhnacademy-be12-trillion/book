@@ -25,9 +25,6 @@ public class MinioService {
     @Value("${minio.bucket}")
     private String bucketName;
 
-//    @Value("${minio.url}")
-//    private String minioUrl;
-
     // 프론트 파일 업로드용
     public String uploadImage(MultipartFile file) {
         if (file == null || file.isEmpty()) return null;
@@ -51,7 +48,6 @@ public class MinioService {
                             .build()
             );
 
-            // String baseUrl = minioUrl.endsWith("/") ? minioUrl : minioUrl + "/";
             return bucketName + "/" + fileName;
 
         } catch (Exception e) {
@@ -105,7 +101,6 @@ public class MinioService {
 
             log.info(" MinIO 업로드 성공: {}", fileName);
 
-            // String baseUrl = minioUrl.endsWith("/") ? minioUrl : minioUrl + "/";
             return bucketName + "/" + fileName;
 
         } catch (Exception e) {

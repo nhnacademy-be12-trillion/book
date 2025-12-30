@@ -48,14 +48,14 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     // 조회 메서드지만 내부에서 '삭제(delete)'가 발생 가능 readOnly = true를 제거
     public List<BookListResponse> getWishlist(Long memberId) {
-        // 1. 회원의 전체 위시리스트 조회
+        // 회원의 전체 위시리스트 조회
         List<Wishlist> wishlists = wishlistRepository.findByMemberId(memberId);
 
         if (wishlists.isEmpty()) {
             return List.of();
         }
 
-        // 2. [핵심 로직] SALE_END(판매 종료) 상태인 도서는 DB에서 삭제하고, 조회 목록에서도 제외
+        // SALE_END(판매 종료) 상태인 도서는 DB에서 삭제하고, 조회 목록에서도 제외
         List<Wishlist> activeWishlists = wishlists.stream()
                 .filter(wishlist -> {
                     // 책 상태 확인
@@ -73,15 +73,15 @@ public class WishlistServiceImpl implements WishlistService {
             return List.of();
         }
 
-        // 3. 유효한 도서들의 ID 목록 추출
+        // 유효한 도서들의 ID 목록 추출
         List<Long> bookIds = activeWishlists.stream()
                 .map(wishlist -> wishlist.getBook().getBookId())
                 .collect(Collectors.toList());
 
-        // 4. 책 이미지 일괄 조회
+        // 책 이미지 일괄 조회
         List<BookFile> bookFiles = bookFileRepository.findAllByJoinedIdInAndFileType(bookIds, FileType.BOOK);
 
-        // 5. 이미지를 Map으로 변환 (ID -> ImageUrl)
+        // 이미지를 Map으로 변환 (ID -> ImageUrl)
         Map<Long, String> bookImageMap = bookFiles.stream()
                 .collect(Collectors.toMap(
                         BookFile::getJoinedId,
@@ -89,7 +89,7 @@ public class WishlistServiceImpl implements WishlistService {
                         (existing, replacement) -> existing
                 ));
 
-        // 6. 응답 DTO 변환 및 반환
+        // 응답 DTO 변환 및 반환
         return activeWishlists.stream()
                 .map(wishlist -> {
                     Book book = wishlist.getBook();
