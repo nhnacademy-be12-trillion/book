@@ -28,6 +28,13 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Run SonarQube
+        run: |
+          mvn clean package \
+          -Dsonar.projectKey=trillion-book \
+          -Dsonar.host.url=${{secrets.SONAR_HOST}} \
+          -Dsonar.token=${{secrets.SONAR_TOKEN}}
+
 
       - name: Build with Maven
         run: mvn clean package -DskipTests
