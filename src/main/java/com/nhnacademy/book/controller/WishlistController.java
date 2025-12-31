@@ -1,5 +1,6 @@
 package com.nhnacademy.book.controller;
 
+import com.nhnacademy.book.controller.docs.WishlistControllerDocs;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.service.WishlistService;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/books/wishlists")
 @RequiredArgsConstructor
-public class WishlistController {
+public class WishlistController implements WishlistControllerDocs {
 
     private final WishlistService wishlistService;
 

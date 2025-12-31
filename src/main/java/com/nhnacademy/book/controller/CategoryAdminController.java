@@ -1,5 +1,6 @@
 package com.nhnacademy.book.controller;
 
+import com.nhnacademy.book.controller.docs.CategoryAdminControllerDocs;
 import com.nhnacademy.book.dto.category.CategorySearchResponse;
 import com.nhnacademy.book.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/categories")
-public class CategoryAdminController {
+public class CategoryAdminController implements CategoryAdminControllerDocs {
 
     private final CategoryService categoryService;
 

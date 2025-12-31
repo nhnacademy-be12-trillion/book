@@ -1,5 +1,6 @@
 package com.nhnacademy.book.client.order.controller;
 
+import com.nhnacademy.book.client.order.controller.docs.OrderBookControllerDocs;
 import com.nhnacademy.book.client.order.dto.OrderBookResponse;
 import com.nhnacademy.book.client.order.dto.OrderBookStockRequest;
 import com.nhnacademy.book.client.order.service.OrderBookService;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
-public class OrderBookController {
+public class OrderBookController implements OrderBookControllerDocs {
     private final OrderBookService orderBookService;
 
     @GetMapping("/books/info")

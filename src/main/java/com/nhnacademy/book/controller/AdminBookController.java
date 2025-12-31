@@ -1,5 +1,6 @@
 package com.nhnacademy.book.controller;
 
+import com.nhnacademy.book.controller.docs.AdminBookControllerDocs;
 import com.nhnacademy.book.dto.book.BookCreateRequest;
 import com.nhnacademy.book.dto.book.BookUpdateRequest;
 import com.nhnacademy.book.service.BookService;
@@ -14,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/books")
-public class AdminBookController {
+public class AdminBookController implements AdminBookControllerDocs {
     private final BookService bookService;
     private final BookAiRegistrationService bookAiRegistrationService;
 

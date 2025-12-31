@@ -1,5 +1,6 @@
 package com.nhnacademy.book.controller;
 
+import com.nhnacademy.book.controller.docs.ReviewControllerDocs;
 import com.nhnacademy.book.dto.review.ReviewCreateRequest;
 import com.nhnacademy.book.dto.review.ReviewResponse;
 import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
@@ -20,7 +21,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/books")
-public class ReviewController {
+public class ReviewController implements ReviewControllerDocs {
 
     private final ReviewService reviewService;
 

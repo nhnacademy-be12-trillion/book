@@ -1,6 +1,7 @@
 package com.nhnacademy.book.controller;
 
 import com.nhnacademy.book.client.order.OrderClient;
+import com.nhnacademy.book.controller.docs.BookControllerDocs;
 import com.nhnacademy.book.dto.book.BookDetailResponse;
 import com.nhnacademy.book.dto.book.BookListResponse;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
@@ -18,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/books")
 @RequiredArgsConstructor
-public class BookController {
+public class BookController implements BookControllerDocs {
 
     private final BookService bookService;
     private final OrderClient orderClient;
