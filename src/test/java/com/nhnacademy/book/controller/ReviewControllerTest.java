@@ -124,6 +124,7 @@ class ReviewControllerTest {
                 5,              // reviewRate
                 "최고입니다.",    // reviewContents
                 LocalDateTime.now(), // createdAt
+                LocalDateTime.now(),
                 "작성자",        // writerName
                 List.of("http://image.url/1.jpg") // imageUrls
         );

@@ -14,6 +14,7 @@ public record ReviewResponse (
         int reviewRate,
         String reviewContents,
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         String writerName,
         List<String> imageUrls
 ) {
@@ -21,13 +22,14 @@ public record ReviewResponse (
         Book book = review.getBook();
         return new ReviewResponse(
                 review.getReviewId(),
-                review.getMemberId(), // [추가] 엔티티에서 memberId 추출
+                review.getMemberId(), // 엔티티에서 memberId 추출
                 book.getBookId(),
                 book.getBookName(),
                 review.getReviewRate(),
                 review.getReviewContents(),
                 review.getCreatedAt(),
-                "작성자", // 기본값 (컨트롤러에서 실제 이름으로 덮어씌움)
+                review.getUpdatedAt(),
+                "작성자", // 기본값
                 imageUrls
         );
     }
@@ -36,7 +38,7 @@ public record ReviewResponse (
         return new ReviewResponse(
                 this.reviewId, this.memberId, this.bookId, this.bookName,
                 this.reviewRate, this.reviewContents,
-                this.createdAt, name, this.imageUrls
+                this.createdAt, this.updatedAt, name, this.imageUrls
         );
     }
 }
