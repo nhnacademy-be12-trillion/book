@@ -24,8 +24,8 @@ public interface AdminBookControllerDocs {
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     ResponseEntity<Long> createBook(
-            @Parameter(description = "도서 생성 정보", required = true) BookCreateRequest request,
-            @Parameter(description = "도서 이미지 파일") MultipartFile file
+            @Parameter(description = "도서 생성 정보", required = true) @RequestPart("book") BookCreateRequest request,
+            @Parameter(description = "도서 이미지 파일") @RequestPart(value = "file", required = false) MultipartFile file
     );
 
     @Operation(summary = "도서 수정", description = "기존 도서 정보를 수정합니다.")
@@ -35,8 +35,8 @@ public interface AdminBookControllerDocs {
             @ApiResponse(responseCode = "404", description = "도서를 찾을 수 없음")
     })
     ResponseEntity<Void> updateBook(
-            @Parameter(description = "도서 ID", required = true) Long bookId,
-            @Parameter(description = "도서 수정 정보", required = true) BookUpdateRequest request
+            @Parameter(description = "도서 ID", required = true) @PathVariable("book-id") Long bookId,
+            @Parameter(description = "도서 수정 정보", required = true) @RequestBody BookUpdateRequest request
     );
 
     @Operation(summary = "도서 삭제", description = "도서를 삭제합니다.")
@@ -45,7 +45,7 @@ public interface AdminBookControllerDocs {
             @ApiResponse(responseCode = "404", description = "도서를 찾을 수 없음")
     })
     ResponseEntity<Void> deleteBook(
-            @Parameter(description = "도서 ID", required = true) Long bookId
+            @Parameter(description = "도서 ID", required = true) @PathVariable("book-id") Long bookId
     );
 
     @Operation(summary = "ISBN으로 도서 정보 조회 (알라딘 API)", description = "ISBN을 이용하여 외부 API(알라딘)에서 도서 정보를 조회합니다.")
@@ -55,6 +55,6 @@ public interface AdminBookControllerDocs {
             @ApiResponse(responseCode = "502", description = "외부 API 호출 실패")
     })
     ResponseEntity<BookCreateRequest> getBookInfoByIsbn(
-            @Parameter(description = "ISBN", required = true) String isbn
+            @Parameter(description = "ISBN", required = true) @PathVariable String isbn
     );
 }
