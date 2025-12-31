@@ -22,7 +22,11 @@ public class OrderBookRepository {
     private final BookRepository bookRepository;
 
     public void decreaseStock(Map<Long, Integer> quantityMap) {
-        List<Long> bookIds = new ArrayList<>(quantityMap.keySet());
+        // 만약 동시에 도서 ID가 (2, 1)인 주문과 (1, 2)인 주문 처리 시 데드락 발생 위험
+        // 데드락 방지를 위해 도서 ID를 순서대로 처리
+        List<Long> bookIds = quantityMap.keySet().stream()
+                .sorted()
+                .toList();
         
         // 상태 변경 로직을 위해 현재 도서 정보를 가져옴
         Map<Long, Book> bookMap = bookRepository.findBooksByBookIdIn(bookIds).stream()
@@ -58,7 +62,9 @@ public class OrderBookRepository {
     }
 
     public void bulkIncreaseStock(Map<Long, Integer> quantityMap) {
-        List<Long> bookIds = new ArrayList<>(quantityMap.keySet());
+        List<Long> bookIds = quantityMap.keySet().stream()
+                .sorted()
+                .toList();
 
         // 상태 변경 로직을 위해 현재 도서 정보를 가져옴
         Map<Long, Book> bookMap = bookRepository.findBooksByBookIdIn(bookIds).stream()
