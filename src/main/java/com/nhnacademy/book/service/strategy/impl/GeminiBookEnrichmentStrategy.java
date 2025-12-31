@@ -31,7 +31,6 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
     // 정보 보강 여부 -> 검색 api에서 가져온 인덱스가 비어있거나 설명이 50글자 이내일 때만 AI 호출
     @Override
     public boolean isApplicable(BookCreateRequest request) {
-        // 이미 내용이 충분하다면 굳이 AI를 부르지 않아서 한도를 아낍니다.
         return request.bookIndex().isEmpty() || request.bookDescription().length() < 50;
     }
 
@@ -96,7 +95,7 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
 
     private BookCreateRequest applyGeminiResponse(BookCreateRequest original, String rawResponse) {
         try {
-            // 1. 구글 API 응답에서 'text' 추출
+            // 구글 API 응답에서 'text' 추출
             JsonNode root = objectMapper.readTree(rawResponse);
 
             // 응답 구조가 예상과 다를 경우를 대비한 안전 장치
@@ -113,12 +112,12 @@ public class GeminiBookEnrichmentStrategy implements BookEnrichStrategy {
             // 코드블럭(```json ... ```) 제거
             innerJsonText = innerJsonText.replaceAll("```json", "").replaceAll("```", "").trim();
 
-            // 2. AI가 만든 JSON을 다시 파싱
+            // AI가 만든 JSON을 다시 파싱
             JsonNode aiData = objectMapper.readTree(innerJsonText);
             String newDescription = aiData.path("description").asText(original.bookDescription());
             String newIndex = aiData.path("index").asText(original.bookIndex());
 
-            // 3. 최종 병합 (기존 isPackaging, bookState 유지)
+            // 최종 병합 (기존 isPackaging, bookState 유지)
             return new BookCreateRequest(
                     original.isbn(), original.bookName(),
                     newDescription, // AI 설명 적용

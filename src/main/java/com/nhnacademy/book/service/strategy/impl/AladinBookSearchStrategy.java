@@ -40,7 +40,7 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
     }
 
     private AladinResponse.Item fetchAladinData(String isbn) {
-        // 1. URI 생성 (HTTPS 사용)
+        // URI 생성 (HTTPS 사용)
         URI uri = UriComponentsBuilder
                 .fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
                 .queryParam("ttbkey", ttbKey)
@@ -53,7 +53,7 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
                 .toUri();
 
         try {
-            // [수정된 부분] 헤더(User-Agent) 추가하여 봇 차단 우회
+            // 헤더(User-Agent) 추가하여 봇 차단 우회
             HttpHeaders headers = new HttpHeaders();
             headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
@@ -69,17 +69,17 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
 
             AladinResponse response = responseEntity.getBody();
 
-            // 2. 결과가 없으면 우리가 만든 커스텀 예외 발생 (404용)
+            // 결과가 없으면 우리가 만든 커스텀 예외 발생 (404용)
             if (response == null || response.item() == null || response.item().isEmpty()) {
                 throw new BookNotFoundException(isbn);
             }
             return response.item().get(0);
 
         } catch (BookNotFoundException e) {
-            // [핵심] 우리가 의도한 예외는 잡지 말고 통과시킴 -> GlobalExceptionHandler가 처리
+            // 우리가 의도한 예외는 잡지 말고 통과시킴 -> GlobalExceptionHandler가 처리
             throw e;
         } catch (Exception e) {
-            // [핵심] 그 외 예상치 못한 에러(타임아웃, 파싱 오류 등)는 로그 찍고 포장해서 던짐
+            // 그 외 예상치 못한 에러(타임아웃, 파싱 오류 등)는 로그 찍고 포장해서 던짐
             log.error("알라딘 API 호출 실패 - ISBN: {}", isbn, e);
             throw new ExternalApiCallException("외부 도서 API 연동 중 오류가 발생했습니다.");
         }
@@ -88,7 +88,7 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
     private BookCreateRequest mapToDto(AladinResponse.Item item) {
         LocalDate pubDate = LocalDate.parse(item.pubDate(), DateTimeFormatter.ISO_DATE);
 
-        // [필수] 목차 HTML 태그 정리 (textarea 가독성용)
+        // 목차 HTML 태그 정리 (textarea 가독성용)
         String rawToc = (item.subInfo() != null && item.subInfo().toc() != null) ? item.subInfo().toc() : "";
         String cleanIndex = cleanToc(rawToc);
 
@@ -116,17 +116,17 @@ public class AladinBookSearchStrategy implements BookSearchStrategy {
         );
     }
 
-    // [필수 로직] 관리자가 <br> 태그를 보고 편집할 순 없으므로 변환 필요
+    // 관리자가 <br> 태그를 보고 편집할 순 없으므로 변환 필요
     private String cleanToc(String rawToc) {
         if (rawToc == null || rawToc.isBlank()) return "";
 
-        // 1. <br> 태그를 줄바꿈(\n)으로 변환 (이게 제일 중요)
+        // <br> 태그를 줄바꿈(\n)으로 변환
         String cleaned = rawToc.replaceAll("(?i)<br\\s*/?>", "\n");
 
-        // 2. 나머지 잡다한 HTML 태그 제거 (<b>, <span> 등)
+        // 나머지 잡다한 HTML 태그 제거 (<b>, <span> 등)
         cleaned = cleaned.replaceAll("<[^>]*>", "");
 
-        // 3. HTML 특수문자(&nbsp;) 공백 처리
+        // HTML 특수문자(&nbsp;) 공백 처리
         cleaned = cleaned.replace("&nbsp;", " ").replace("\u00A0", " ");
 
         return cleaned.trim();
