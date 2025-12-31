@@ -1,5 +1,6 @@
 package com.nhnacademy.book.controller;
 
+import com.nhnacademy.book.controller.docs.CategoryControllerDocs;
 import com.nhnacademy.book.dto.category.BookCategoryResponse;
 import com.nhnacademy.book.dto.category.CategoryTreeResponse;
 import com.nhnacademy.book.service.CategoryService;
@@ -15,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/books/categories")
 @RequiredArgsConstructor
-public class CategoryController {
+public class CategoryController implements CategoryControllerDocs {
 
     private final CategoryService categoryService;
 
