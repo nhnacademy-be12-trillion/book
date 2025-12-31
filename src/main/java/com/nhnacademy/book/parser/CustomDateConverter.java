@@ -2,7 +2,6 @@ package com.nhnacademy.book.parser;
 
 import com.nhnacademy.book.entity.Book;
 import com.opencsv.bean.AbstractBeanField;
-import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

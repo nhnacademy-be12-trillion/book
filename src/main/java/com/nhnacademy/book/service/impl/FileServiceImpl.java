@@ -6,8 +6,6 @@ import com.nhnacademy.book.repository.BookFileRepository;
 import com.nhnacademy.book.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.LifecycleState;
-import org.bouncycastle.util.Pack;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

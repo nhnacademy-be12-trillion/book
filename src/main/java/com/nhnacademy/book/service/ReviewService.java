@@ -1,8 +1,8 @@
 package com.nhnacademy.book.service;
 
 import com.nhnacademy.book.dto.review.ReviewCreateRequest;
-import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
 import com.nhnacademy.book.dto.review.ReviewResponse;
+import com.nhnacademy.book.dto.review.ReviewUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;

@@ -1,6 +1,7 @@
 package com.nhnacademy.book.service;
 
 import com.nhnacademy.book.dto.book.BookListResponse;
+
 import java.util.List;
 
 public interface WishlistService {
