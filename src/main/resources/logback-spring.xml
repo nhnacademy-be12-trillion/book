@@ -3,33 +3,42 @@
 
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
-    <property name="LOG_PATH" value="${LOG_PATH:-/logs}"/>
-    <property name="APP_NAME" value="${LOG_FILENAME:-book-service}"/>
+    <property name="LOG_PATH" value="/app/logs"/>
+    <property name="APP_NAME" value="trillion-book"/>
+    <property name="INSTANCE_ID" value="${HOSTNAME:-default}"/>
 
     <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <file>${LOG_PATH}/${APP_NAME}-${INSTANCE_ID}.log</file>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <globalCustomFields>
-                {"service":"${spring.application.name:-unknown}"}
-            </globalCustomFields>
             <providers>
                 <timestamp/>
                 <logLevel/>
-                <threadName/>
                 <loggerName/>
                 <message/>
+                <pattern>
+                    <pattern>
+                        {"trillion-service":"${APP_NAME}","instance":"${INSTANCE_ID}"}
+                    </pattern>
+                </pattern>
                 <mdc/>
-                <stackTrace/>
+                <stackTrace>
+                    <fieldName>stack_trace</fieldName>
+                </stackTrace>
             </providers>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}-${INSTANCE_ID}-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
     </appender>
 
-    <root level = "INFO">
-        <appender-ref ref="APP_FILE"/>
-        <appender-ref ref="CONSOLE"/>
-    </root>
+    <springProfile name="!dev">
+        <springProfile name="!local">
+            <root level="INFO">
+                <appender-ref ref="APP_FILE"/>
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </springProfile>
+    </springProfile>
+
 </configuration>
