@@ -59,6 +59,10 @@ public class MinioService {
     // URL 이미지 다운로드 및 업로드
     public String uploadFromUrl(String imageUrl) {
         try {
+            if (imageUrl.contains("aladin.co.kr")) {
+                imageUrl = imageUrl.replace("/sum/", "/letslook/");
+                imageUrl = imageUrl.replace("cover200", "cover500");
+            }
             // 알라딘에서 이미지 다운로드 (메모리에 저장)
             URL url = new URL(imageUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
