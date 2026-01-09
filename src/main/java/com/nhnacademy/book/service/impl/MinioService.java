@@ -25,7 +25,7 @@ public class MinioService {
     @Value("${minio.bucket}")
     private String bucketName;
 
-    // 프론트 파일 업로드용
+    // 프론트 파일 업로드용 (원본 화질 그대로 저장)
     public String uploadImage(MultipartFile file) {
         if (file == null || file.isEmpty()) return null;
         try {
@@ -56,13 +56,19 @@ public class MinioService {
         }
     }
 
-    // URL 이미지 다운로드 및 업로드
+    // URL 이미지 다운로드 및 업로드 (화질 개선 로직 적용)
     public String uploadFromUrl(String imageUrl) {
         try {
+            // 알라딘 이미지 URL일 경우, 저화질 패턴을 고화질로 강제 변경
             if (imageUrl.contains("aladin.co.kr")) {
+                // 썸네일 경로(/sum/)를 미리보기 경로(/letslook/)로 변경 (화질 향상)
                 imageUrl = imageUrl.replace("/sum/", "/letslook/");
-                imageUrl = imageUrl.replace("cover200", "cover500");
+
+                // cover 뒤에 숫자가 붙거나 안 붙은 모든 경우(cover200, cover150, cover 등)를 cover500으로 변경
+                // 정규식 설명: "cover" 뒤에 숫자(\d)가 0개 이상(*) 있는 부분을 "cover500"으로 치환
+                imageUrl = imageUrl.replaceAll("cover\\d*", "cover500");
             }
+
             // 알라딘에서 이미지 다운로드 (메모리에 저장)
             URL url = new URL(imageUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -76,7 +82,10 @@ public class MinioService {
 
             int responseCode = conn.getResponseCode();
             if (responseCode != 200) {
-              throw new ExternalApiCallException("외부 이미자 다운 실패");
+                // letslook(미리보기)이나 cover500이 없는 경우 원본 URL로 재시도 로직이 필요할 수 있으나,
+                // 여기서는 예외 처리하여 로그를 남김
+                log.warn("고화질 이미지 다운로드 실패, URL: {}", imageUrl);
+                throw new ExternalApiCallException("외부 이미지 다운로드 실패 (응답 코드: " + responseCode + ")");
             }
 
             // 이미지를 byte 배열로 한 번에 읽어옴
@@ -103,15 +112,13 @@ public class MinioService {
                             .build()
             );
 
-            log.info(" MinIO 업로드 성공: {}", fileName);
+            log.info("MinIO 업로드 성공 (고화질 적용): {}", fileName);
 
             return bucketName + "/" + fileName;
 
         } catch (Exception e) {
             log.error("URL 업로드 최종 실패: {} / 사유: {}", imageUrl, e.getMessage());
-            throw new ExternalApiCallException("Mino에 url 저장하는 도중 예외 발생");
-            // 실패 시 null 반환 -> DB에는 원본 URL 저장
+            throw new ExternalApiCallException("MinIO에 URL 이미지를 저장하는 도중 예외 발생");
         }
-
     }
 }
