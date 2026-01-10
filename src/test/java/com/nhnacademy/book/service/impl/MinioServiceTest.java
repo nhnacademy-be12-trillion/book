@@ -119,7 +119,7 @@ class MinioServiceTest {
         // when & then
         assertThatThrownBy(() -> minioService.uploadFromUrl(invalidUrl))
                 .isInstanceOf(ExternalApiCallException.class)
-                .hasMessage("Mino에 url 저장하는 도중 예외 발생");
+                .hasMessage("MinIO에 URL 이미지를 저장하는 도중 예외 발생");
     }
 
 }
